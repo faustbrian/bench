@@ -1,0 +1,68 @@
+{
+    "name": "cline/bench",
+    "description": "Modern PHP benchmarking with comparisons, snapshots, and regression gates.",
+    "license": "MIT",
+    "keywords": [
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "Brian Faust",
+            "email": "brian@cline.sh"
+        }
+    ],
+    "require": {
+        "php": "^8.5.0",
+        "symfony/console": "^7.4",
+        "symfony/finder": "^7.4",
+        "nunomaduro/termwind": "^2.3"
+    },
+    "require-dev": {
+        "cline/coding-standard": "^2.0.1",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.0",
+        "symfony/var-dumper": "^7.4.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Cline\\Bench\\": "src/"
+        },
+        "files": [
+            "src/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/bench"
+    ],
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "lint": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_WARNING & ~E_USER_DEPRECATED' vendor/bin/ecs check --fix",
+        "refactor": "rector",
+        "test": [
+            "@test:lint",
+            "@test:type-coverage",
+            "@test:unit",
+            "@test:types",
+            "@test:refactor"
+        ],
+        "test:lint": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_WARNING & ~E_USER_DEPRECATED' vendor/bin/ecs check",
+        "test:refactor": "rector --dry-run",
+        "test:type-coverage": "vendor/bin/pest --parallel --min=80 --type-coverage",
+        "test:types": "vendor/bin/phpstan analyse",
+        "test:unit": "vendor/bin/pest --parallel --min=80 --coverage"
+    }
+}
