@@ -21,6 +21,7 @@ use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revs;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
+use Cline\Bench\Enums\Metric;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
@@ -142,7 +143,7 @@ final class BenchmarkDiscovery
                 groups: [...$classGroups, ...$this->groupAttributes($method)],
                 parameterSets: $this->parameterSets($method),
                 assertions: $this->assertions($method),
-                regressionMetric: $this->stringAttribute($method, Regression::class, 'metric', ''),
+                regressionMetric: $this->metricAttribute($method, Regression::class, 'metric'),
                 regressionTolerance: $this->stringAttribute($method, Regression::class, 'tolerance', ''),
             );
         }
@@ -176,6 +177,19 @@ final class BenchmarkDiscovery
         $value = $this->attributeValue($reflection, $attribute, $property);
 
         return is_int($value) ? $value : $default;
+    }
+
+    /**
+     * @param ReflectionClass<object>|ReflectionMethod $reflection
+     */
+    private function metricAttribute(
+        ReflectionClass|ReflectionMethod $reflection,
+        string $attribute,
+        string $property,
+    ): ?Metric {
+        $value = $this->attributeValue($reflection, $attribute, $property);
+
+        return $value instanceof Metric ? $value : null;
     }
 
     /**

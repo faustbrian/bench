@@ -9,6 +9,9 @@
 
 namespace Cline\Bench\Discovery;
 
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
+
 /**
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
@@ -16,8 +19,8 @@ namespace Cline\Bench\Discovery;
 final readonly class BenchmarkAssertion
 {
     public function __construct(
-        public string $metric,
-        public string $operator,
+        public Metric $metric,
+        public AssertionOperator $operator,
         public float $value,
     ) {}
 }

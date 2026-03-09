@@ -19,6 +19,8 @@ use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revs;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 
 describe('Attributes', function (): void {
     it('stores constructor arguments for benchmark metadata', function (): void {
@@ -48,7 +50,7 @@ describe('Attributes', function (): void {
         )->toBe(['teardown']);
         expect(
             new Regression()->metric,
-        )->toBe('median');
+        )->toBe(Metric::Median);
         expect(
             new Regression()->tolerance,
         )->toBe('5%');
@@ -59,10 +61,10 @@ describe('Attributes', function (): void {
             new Params([['size' => 'small']])->sets,
         )->toBe([['size' => 'small']]);
 
-        $assert = new Assert('median', '<', 1_000_000.0);
+        $assert = new Assert(Metric::Median, AssertionOperator::LessThan, 1_000_000.0);
 
-        expect($assert->metric)->toBe('median');
-        expect($assert->operator)->toBe('<');
+        expect($assert->metric)->toBe(Metric::Median);
+        expect($assert->operator)->toBe(AssertionOperator::LessThan);
         expect($assert->value)->toBe(1_000_000.0);
     });
 });

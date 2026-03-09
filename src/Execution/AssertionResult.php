@@ -9,6 +9,9 @@
 
 namespace Cline\Bench\Execution;
 
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
+
 /**
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
@@ -16,8 +19,8 @@ namespace Cline\Bench\Execution;
 final readonly class AssertionResult
 {
     public function __construct(
-        public string $metric,
-        public string $operator,
+        public Metric $metric,
+        public AssertionOperator $operator,
         public float $expected,
         public float $actual,
         public bool $passed,
@@ -29,8 +32,8 @@ final readonly class AssertionResult
     public function toArray(): array
     {
         return [
-            'metric' => $this->metric,
-            'operator' => $this->operator,
+            'metric' => $this->metric->value,
+            'operator' => $this->operator->value,
             'expected' => $this->expected,
             'actual' => $this->actual,
             'passed' => $this->passed,

@@ -12,6 +12,9 @@ namespace Cline\Bench\Console\Commands;
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
 use Cline\Bench\Console\Concerns\FormatsResults;
+use Cline\Bench\Enums\ComparisonReference;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\TimeUnit;
 use Cline\Bench\Environment\EnvironmentFingerprint;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
@@ -67,11 +70,11 @@ final class RunCommand extends Command
     /** @var array<string, string> */
     private array $competitorAliases = [];
 
-    private string $progressMetric = 'median';
+    private Metric $progressMetric = Metric::Median;
 
-    private string $progressTimeUnit = 'μs';
+    private TimeUnit $progressTimeUnit = TimeUnit::Microseconds;
 
-    private string $comparisonReference = 'closest';
+    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
 
     private string $decimalSeparator = '.';
 
@@ -125,7 +128,7 @@ final class RunCommand extends Command
         $this->percentageDecimals = $config->percentageDecimals;
         $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
         $this->bootstrap($config);
-        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat;
+        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value;
         $selection = $this->selection($input);
         $metadata = $this->reportMetadata('run', $config, $selection);
         $showProgress = $format === 'table'
@@ -240,7 +243,7 @@ final class RunCommand extends Command
 
     protected function comparisonReference(): string
     {
-        return $this->comparisonReference;
+        return $this->comparisonReference->value;
     }
 
     protected function decimalSeparator(): string
@@ -554,7 +557,7 @@ final class RunCommand extends Command
     private function formatConfiguredTimeMetric(BenchmarkResult $result): string
     {
         $value = match ($this->normalizedProgressMetric()) {
-            'mean', 'average', 'avg' => $result->summary->mean,
+            Metric::Mean => $result->summary->mean,
             default => $result->summary->median,
         };
 
@@ -566,7 +569,7 @@ final class RunCommand extends Command
     private function progressMetricLabel(): string
     {
         return match ($this->normalizedProgressMetric()) {
-            'mean', 'average', 'avg' => 'avg',
+            Metric::Mean => 'avg',
             default => 'median',
         };
     }
@@ -585,14 +588,14 @@ final class RunCommand extends Command
         };
     }
 
-    private function normalizedProgressMetric(): string
+    private function normalizedProgressMetric(): Metric
     {
-        return mb_strtolower($this->progressMetric);
+        return $this->progressMetric;
     }
 
     private function normalizedProgressTimeUnit(): string
     {
-        return mb_strtolower($this->progressTimeUnit);
+        return mb_strtolower($this->progressTimeUnit->value);
     }
 
     private function formatMetricNumber(float $value, int $decimals): string

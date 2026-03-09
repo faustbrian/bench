@@ -9,6 +9,8 @@
 
 namespace Cline\Bench\Snapshot;
 
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\AssertionResult;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Statistics\SummaryStatistics;
@@ -134,8 +136,8 @@ final readonly class SnapshotStore
             )),
             assertions: array_map(
                 fn (array $assertion): AssertionResult => new AssertionResult(
-                    metric: $this->stringValue($assertion['metric'] ?? null),
-                    operator: $this->stringValue($assertion['operator'] ?? null),
+                    metric: $this->metricValue($assertion['metric'] ?? null) ?? Metric::Median,
+                    operator: $this->assertionOperatorValue($assertion['operator'] ?? null),
                     expected: $this->floatValue($assertion['expected'] ?? null),
                     actual: $this->floatValue($assertion['actual'] ?? null),
                     passed: (bool) ($assertion['passed'] ?? false),
@@ -146,7 +148,7 @@ final readonly class SnapshotStore
                 )),
             ),
             regressionMetric: is_array($result['regression'] ?? null)
-                ? $this->stringValue($result['regression']['metric'] ?? null)
+                ? $this->metricValue($result['regression']['metric'] ?? null)
                 : null,
             regressionTolerance: is_array($result['regression'] ?? null)
                 ? $this->stringValue($result['regression']['tolerance'] ?? null)
@@ -167,6 +169,20 @@ final readonly class SnapshotStore
     private function floatValue(mixed $value): float
     {
         return is_float($value) || is_int($value) ? (float) $value : 0.0;
+    }
+
+    private function metricValue(mixed $value): ?Metric
+    {
+        return is_string($value) ? Metric::tryFrom($value) : null;
+    }
+
+    private function assertionOperatorValue(mixed $value): AssertionOperator
+    {
+        if (!is_string($value)) {
+            return AssertionOperator::Equal;
+        }
+
+        return AssertionOperator::tryFrom($value) ?? AssertionOperator::Equal;
     }
 
     private function path(string $name): string

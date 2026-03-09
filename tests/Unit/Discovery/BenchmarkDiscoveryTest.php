@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Discovery\BenchmarkDiscovery;
+use Cline\Bench\Enums\Metric;
 use Tests\Fixtures\Benchmarks\DefaultBench;
 use Tests\Fixtures\Benchmarks\ParameterizedBench;
 
@@ -62,9 +63,9 @@ describe('BenchmarkDiscovery', function (): void {
                 ['size' => 'small', 'multiplier' => 10],
                 ['size' => 'large', 'multiplier' => 100],
             ])
-            ->and($parameterizedBench->regressionMetric)->toBe('median')
+            ->and($parameterizedBench->regressionMetric)->toBe(Metric::Median)
             ->and($parameterizedBench->regressionTolerance)->toBe('7%')
             ->and($parameterizedBench->assertions)->toHaveCount(1)
-            ->and($parameterizedBench->assertions[0]->metric)->toBe('median');
+            ->and($parameterizedBench->assertions[0]->metric)->toBe(Metric::Median);
     });
 });

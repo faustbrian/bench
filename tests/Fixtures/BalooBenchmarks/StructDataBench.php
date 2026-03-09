@@ -17,6 +17,8 @@ use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revs;
 use Cline\Bench\Attributes\Scenario;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 use Tests\Fixtures\BalooBenchmarks\Support\BalooBenchCase;
 
 /**
@@ -30,8 +32,8 @@ final class StructDataBench extends BalooBenchCase
     #[Bench('collection-transformation')]
     #[Iterations(3)]
     #[Revs(120)]
-    #[Regression(metric: 'median', tolerance: '5%')]
-    #[Assert('median', '<', 1_000_000.0)]
+    #[Regression(metric: Metric::Median, tolerance: '5%')]
+    #[Assert(Metric::Median, AssertionOperator::LessThan, 1_000_000.0)]
     public function benchCollectionTransformation(): void
     {
         $this->structTransform(profile: false, cached: true);

@@ -13,6 +13,7 @@ use Cline\Bench\Comparison\ComparePolicyEvaluator;
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
 use Cline\Bench\Console\Concerns\FormatsResults;
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Environment\CompatibilityMode;
 use Cline\Bench\Environment\EnvironmentCompatibility;
 use Cline\Bench\Environment\EnvironmentFingerprint;
@@ -60,7 +61,7 @@ final class CompareCommand extends Command
     /** @var array<string, string> */
     private array $competitorAliases = [];
 
-    private string $comparisonReference = 'closest';
+    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
 
     private string $decimalSeparator = '.';
 
@@ -135,7 +136,7 @@ final class CompareCommand extends Command
             minimumRatio: $this->nullableFloatOption($input, 'min-ratio'),
         );
 
-        $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat) {
+        $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value) {
             'json' => $this->asComparisonJson($current, $snapshot->results, [
                 'schema_version' => 1,
                 'report_type' => 'comparison',
@@ -219,7 +220,7 @@ final class CompareCommand extends Command
 
     protected function comparisonReference(): string
     {
-        return $this->comparisonReference;
+        return $this->comparisonReference->value;
     }
 
     protected function decimalSeparator(): string

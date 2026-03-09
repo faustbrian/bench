@@ -9,9 +9,9 @@
 
 namespace Cline\Bench\Snapshot;
 
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 
-use function in_array;
 use function max;
 use function mb_rtrim;
 
@@ -24,7 +24,7 @@ final class RegressionEvaluator
         BenchmarkResult $current,
         BenchmarkResult $baseline,
         string $tolerance,
-        string $metric = 'median',
+        Metric $metric = Metric::Median,
     ): RegressionDecision {
         $baselineValue = $this->metricValue($baseline, $metric);
         $currentValue = $this->metricValue($current, $metric);
@@ -33,16 +33,16 @@ final class RegressionEvaluator
 
         return new RegressionDecision(
             passed: $deltaPercentage <= $tolerancePercentage,
-            metric: $metric,
+            metric: $metric->value,
             deltaPercentage: $deltaPercentage,
             tolerancePercentage: $tolerancePercentage,
         );
     }
 
-    private function metricValue(BenchmarkResult $result, string $metric): float
+    private function metricValue(BenchmarkResult $result, Metric $metric): float
     {
         return match ($metric) {
-            'ops/s', 'operations_per_second' => $result->summary->operationsPerSecond,
+            Metric::OperationsPerSecond => $result->summary->operationsPerSecond,
             default => $result->summary->median,
         };
     }
@@ -52,9 +52,9 @@ final class RegressionEvaluator
         return (float) mb_rtrim($tolerance, '% ');
     }
 
-    private function deltaPercentage(float $currentValue, float $baselineValue, string $metric): float
+    private function deltaPercentage(float $currentValue, float $baselineValue, Metric $metric): float
     {
-        if (in_array($metric, ['ops/s', 'operations_per_second'], true)) {
+        if ($metric === Metric::OperationsPerSecond) {
             return (($baselineValue - $currentValue) / max($baselineValue, 1.0)) * 100;
         }
 

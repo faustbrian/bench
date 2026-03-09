@@ -16,6 +16,7 @@ use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revs;
 use Cline\Bench\Attributes\Scenario;
+use Cline\Bench\Enums\Metric;
 use Tests\Fixtures\BalooBenchmarks\Support\BalooBenchCase;
 
 /**
@@ -29,7 +30,7 @@ final class SpatieDataBench extends BalooBenchCase
     #[Bench('collection-transformation')]
     #[Iterations(3)]
     #[Revs(120)]
-    #[Regression(metric: 'median', tolerance: '5%')]
+    #[Regression(metric: Metric::Median, tolerance: '5%')]
     public function benchCollectionTransformation(): void
     {
         $this->spatieTransform(profile: false, cached: true);

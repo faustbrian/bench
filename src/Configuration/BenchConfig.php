@@ -9,6 +9,10 @@
 
 namespace Cline\Bench\Configuration;
 
+use Cline\Bench\Enums\ComparisonReference;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ReportFormat;
+use Cline\Bench\Enums\TimeUnit;
 use Cline\Bench\Environment\CompatibilityMode;
 
 /**
@@ -33,12 +37,12 @@ final readonly class BenchConfig
         public int $defaultWarmupIterations = 0,
         public int $calibrationBudgetNanoseconds = 0,
         public bool $processIsolation = false,
-        public string $defaultRegressionMetric = 'median',
+        public Metric $defaultRegressionMetric = Metric::Median,
         public string $defaultRegressionTolerance = '5%',
-        public string $defaultReportFormat = 'table',
-        public string $progressMetric = 'median',
-        public string $progressTimeUnit = 'μs',
-        public string $comparisonReference = 'closest',
+        public ReportFormat $defaultReportFormat = ReportFormat::Table,
+        public Metric $progressMetric = Metric::Median,
+        public TimeUnit $progressTimeUnit = TimeUnit::Microseconds,
+        public ComparisonReference $comparisonReference = ComparisonReference::Closest,
         public string $decimalSeparator = '.',
         public string $thousandsSeparator = ',',
         public int $rawNumberDecimals = 3,
@@ -108,7 +112,7 @@ final readonly class BenchConfig
         );
     }
 
-    public function withDefaultRegression(string $metric, string $tolerance): self
+    public function withDefaultRegression(Metric $metric, string $tolerance): self
     {
         return $this->copy(
             defaultRegressionMetric: $metric,
@@ -116,7 +120,7 @@ final readonly class BenchConfig
         );
     }
 
-    public function withDefaultReportFormat(string $defaultReportFormat): self
+    public function withDefaultReportFormat(ReportFormat $defaultReportFormat): self
     {
         return $this->copy(defaultReportFormat: $defaultReportFormat);
     }
@@ -145,17 +149,17 @@ final readonly class BenchConfig
         return $this->copy(scenarioBaselines: $scenarioBaselines);
     }
 
-    public function withProgressMetric(string $progressMetric): self
+    public function withProgressMetric(Metric $progressMetric): self
     {
         return $this->copy(progressMetric: $progressMetric);
     }
 
-    public function withProgressTimeUnit(string $progressTimeUnit): self
+    public function withProgressTimeUnit(TimeUnit $progressTimeUnit): self
     {
         return $this->copy(progressTimeUnit: $progressTimeUnit);
     }
 
-    public function withComparisonReference(string $comparisonReference): self
+    public function withComparisonReference(ComparisonReference $comparisonReference): self
     {
         return $this->copy(comparisonReference: $comparisonReference);
     }
@@ -229,12 +233,12 @@ final readonly class BenchConfig
         ?int $calibrationBudgetNanoseconds = null,
         bool $processIsolation = false,
         bool $processIsolationIsSet = false,
-        ?string $defaultRegressionMetric = null,
+        ?Metric $defaultRegressionMetric = null,
         ?string $defaultRegressionTolerance = null,
-        ?string $defaultReportFormat = null,
-        ?string $progressMetric = null,
-        ?string $progressTimeUnit = null,
-        ?string $comparisonReference = null,
+        ?ReportFormat $defaultReportFormat = null,
+        ?Metric $progressMetric = null,
+        ?TimeUnit $progressTimeUnit = null,
+        ?ComparisonReference $comparisonReference = null,
         ?string $decimalSeparator = null,
         ?string $thousandsSeparator = null,
         ?int $rawNumberDecimals = null,

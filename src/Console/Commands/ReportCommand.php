@@ -12,6 +12,7 @@ namespace Cline\Bench\Console\Commands;
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
 use Cline\Bench\Console\Concerns\FormatsResults;
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Environment\EnvironmentFingerprint;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
@@ -57,7 +58,7 @@ final class ReportCommand extends Command
     /** @var array<string, string> */
     private array $competitorAliases = [];
 
-    private string $comparisonReference = 'closest';
+    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
 
     private string $decimalSeparator = '.';
 
@@ -106,7 +107,7 @@ final class ReportCommand extends Command
         $selection = $this->selection($input);
         $results = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
         $against = $this->nullableOptionString($input, 'against');
-        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat;
+        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value;
         $metadata = $this->reportMetadata('report', $config, $selection);
 
         if ($against === null && $config->scenarioBaselines === []) {
@@ -175,7 +176,7 @@ final class ReportCommand extends Command
 
     protected function comparisonReference(): string
     {
-        return $this->comparisonReference;
+        return $this->comparisonReference->value;
     }
 
     protected function decimalSeparator(): string

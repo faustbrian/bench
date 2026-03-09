@@ -9,6 +9,10 @@
 
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
+use Cline\Bench\Enums\ComparisonReference;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ReportFormat;
+use Cline\Bench\Enums\TimeUnit;
 use Cline\Bench\Environment\CompatibilityMode;
 
 describe('BenchConfig', function (): void {
@@ -27,12 +31,12 @@ describe('BenchConfig', function (): void {
             ->and($config->defaultWarmupIterations)->toBe(0)
             ->and($config->calibrationBudgetNanoseconds)->toBe(0)
             ->and($config->processIsolation)->toBeFalse()
-            ->and($config->defaultRegressionMetric)->toBe('median')
+            ->and($config->defaultRegressionMetric)->toBe(Metric::Median)
             ->and($config->defaultRegressionTolerance)->toBe('5%')
-            ->and($config->defaultReportFormat)->toBe('table')
-            ->and($config->progressMetric)->toBe('median')
-            ->and($config->progressTimeUnit)->toBe('μs')
-            ->and($config->comparisonReference)->toBe('closest')
+            ->and($config->defaultReportFormat)->toBe(ReportFormat::Table)
+            ->and($config->progressMetric)->toBe(Metric::Median)
+            ->and($config->progressTimeUnit)->toBe(TimeUnit::Microseconds)
+            ->and($config->comparisonReference)->toBe(ComparisonReference::Closest)
             ->and($config->decimalSeparator)->toBe('.')
             ->and($config->thousandsSeparator)->toBe(',')
             ->and($config->rawNumberDecimals)->toBe(3)
@@ -55,6 +59,10 @@ describe('BenchConfig', function (): void {
 
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Environment\CompatibilityMode;
+use Cline\Bench\Enums\ComparisonReference;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ReportFormat;
+use Cline\Bench\Enums\TimeUnit;
 
 return BenchConfig::default()
     ->withBenchmarkPath('custom-benchmarks')
@@ -69,11 +77,11 @@ return BenchConfig::default()
     ->withDefaultWarmupIterations(3)
     ->withCalibrationBudgetNanoseconds(5000000)
     ->withProcessIsolation(true)
-    ->withDefaultRegression(metric: 'ops/s', tolerance: '3%')
-    ->withDefaultReportFormat('md')
-    ->withProgressMetric('average')
-    ->withProgressTimeUnit('ms')
-    ->withComparisonReference('slowest')
+    ->withDefaultRegression(metric: Metric::OperationsPerSecond, tolerance: '3%')
+    ->withDefaultReportFormat(ReportFormat::Markdown)
+    ->withProgressMetric(Metric::Mean)
+    ->withProgressTimeUnit(TimeUnit::Milliseconds)
+    ->withComparisonReference(ComparisonReference::Slowest)
     ->withNumberSeparators(decimalSeparator: ',', thousandsSeparator: '.')
     ->withRawNumberDecimals(1)
     ->withDurationDecimals(0)
@@ -98,12 +106,12 @@ PHP);
             ->and($config->defaultWarmupIterations)->toBe(3)
             ->and($config->calibrationBudgetNanoseconds)->toBe(5_000_000)
             ->and($config->processIsolation)->toBeTrue()
-            ->and($config->defaultRegressionMetric)->toBe('ops/s')
+            ->and($config->defaultRegressionMetric)->toBe(Metric::OperationsPerSecond)
             ->and($config->defaultRegressionTolerance)->toBe('3%')
-            ->and($config->defaultReportFormat)->toBe('md')
-            ->and($config->progressMetric)->toBe('average')
-            ->and($config->progressTimeUnit)->toBe('ms')
-            ->and($config->comparisonReference)->toBe('slowest')
+            ->and($config->defaultReportFormat)->toBe(ReportFormat::Markdown)
+            ->and($config->progressMetric)->toBe(Metric::Mean)
+            ->and($config->progressTimeUnit)->toBe(TimeUnit::Milliseconds)
+            ->and($config->comparisonReference)->toBe(ComparisonReference::Slowest)
             ->and($config->decimalSeparator)->toBe(',')
             ->and($config->thousandsSeparator)->toBe('.')
             ->and($config->rawNumberDecimals)->toBe(1)

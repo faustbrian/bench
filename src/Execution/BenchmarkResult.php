@@ -9,6 +9,7 @@
 
 namespace Cline\Bench\Execution;
 
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Statistics\SummaryStatistics;
 
 use const JSON_THROW_ON_ERROR;
@@ -38,7 +39,7 @@ final readonly class BenchmarkResult
         public array $parameters = [],
         public array $groups = [],
         public array $assertions = [],
-        public ?string $regressionMetric = null,
+        public ?Metric $regressionMetric = null,
         public ?string $regressionTolerance = null,
     ) {}
 
@@ -81,7 +82,7 @@ final readonly class BenchmarkResult
                 $this->assertions,
             ),
             'regression' => [
-                'metric' => $this->regressionMetric,
+                'metric' => $this->regressionMetric?->value,
                 'tolerance' => $this->regressionTolerance,
             ],
         ];

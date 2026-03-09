@@ -9,6 +9,8 @@
 
 namespace Cline\Bench\Discovery;
 
+use Cline\Bench\Enums\Metric;
+
 /**
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
@@ -37,7 +39,7 @@ final readonly class DiscoveredBenchmark
         public array $groups = [],
         public array $parameterSets = [],
         public array $assertions = [],
-        public ?string $regressionMetric = null,
+        public ?Metric $regressionMetric = null,
         public ?string $regressionTolerance = null,
     ) {}
 }

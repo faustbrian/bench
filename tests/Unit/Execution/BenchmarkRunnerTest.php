@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Configuration\BenchConfig;
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
 use Tests\Fixtures\Benchmarks\CalibratedBench;
@@ -56,7 +57,7 @@ describe('BenchmarkRunner', function (): void {
             ->and($parameterizedResults[0]->groups)->toBe(['dto', 'comparison'])
             ->and($parameterizedResults[0]->assertions)->toHaveCount(1)
             ->and($parameterizedResults[0]->assertions[0]->passed)->toBeTrue()
-            ->and($parameterizedResults[0]->regressionMetric)->toBe('median')
+            ->and($parameterizedResults[0]->regressionMetric)->toBe(Metric::Median)
             ->and($parameterizedResults[0]->regressionTolerance)->toBe('7%')
             ->and($parameterizedResults[0]->parameters)->toBe(['size' => 'small', 'multiplier' => 10])
             ->and($parameterizedResults[1]->parameters)->toBe(['size' => 'large', 'multiplier' => 100])

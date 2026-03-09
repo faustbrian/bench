@@ -8,6 +8,8 @@
  */
 
 use Cline\Bench\Console\Concerns\FormatsResults;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\AssertionResult;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Statistics\SummaryStatistics;
@@ -192,14 +194,14 @@ function goldenResults(): array
             groups: ['baloo', 'dto', 'comparison'],
             assertions: [
                 new AssertionResult(
-                    metric: 'median',
-                    operator: '<',
+                    metric: Metric::Median,
+                    operator: AssertionOperator::LessThan,
                     expected: 150.0,
                     actual: 100.0,
                     passed: true,
                 ),
             ],
-            regressionMetric: 'median',
+            regressionMetric: Metric::Median,
             regressionTolerance: '5%',
         ),
         new BenchmarkResult(
@@ -216,14 +218,14 @@ function goldenResults(): array
             groups: ['baloo', 'dto', 'comparison'],
             assertions: [
                 new AssertionResult(
-                    metric: 'median',
-                    operator: '<',
+                    metric: Metric::Median,
+                    operator: AssertionOperator::LessThan,
                     expected: 170.0,
                     actual: 120.0,
                     passed: true,
                 ),
             ],
-            regressionMetric: 'median',
+            regressionMetric: Metric::Median,
             regressionTolerance: '5%',
         ),
     ];
@@ -249,14 +251,14 @@ function goldenBaselineResults(): array
             groups: ['baloo', 'dto', 'comparison'],
             assertions: [
                 new AssertionResult(
-                    metric: 'median',
-                    operator: '<',
+                    metric: Metric::Median,
+                    operator: AssertionOperator::LessThan,
                     expected: 150.0,
                     actual: 110.0,
                     passed: true,
                 ),
             ],
-            regressionMetric: 'median',
+            regressionMetric: Metric::Median,
             regressionTolerance: '5%',
         ),
         new BenchmarkResult(
@@ -273,14 +275,14 @@ function goldenBaselineResults(): array
             groups: ['baloo', 'dto', 'comparison'],
             assertions: [
                 new AssertionResult(
-                    metric: 'median',
-                    operator: '<',
+                    metric: Metric::Median,
+                    operator: AssertionOperator::LessThan,
                     expected: 170.0,
                     actual: 130.0,
                     passed: true,
                 ),
             ],
-            regressionMetric: 'median',
+            regressionMetric: Metric::Median,
             regressionTolerance: '5%',
         ),
     ];

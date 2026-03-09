@@ -10,6 +10,8 @@
 namespace Cline\Bench\Attributes;
 
 use Attribute;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 
 /**
  * @psalm-immutable
@@ -19,8 +21,8 @@ use Attribute;
 final readonly class Assert
 {
     public function __construct(
-        public string $metric,
-        public string $operator,
+        public Metric $metric,
+        public AssertionOperator $operator,
         public float|int $value,
     ) {}
 }

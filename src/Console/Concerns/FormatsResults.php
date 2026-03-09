@@ -12,6 +12,7 @@ namespace Cline\Bench\Console\Concerns;
 use Cline\Bench\Comparison\ComparisonEngine;
 use Cline\Bench\Comparison\ComparisonRow;
 use Cline\Bench\Comparison\SignificanceCalculator;
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Snapshot\RegressionEvaluator;
 use Symfony\Component\Console\Helper\Table;
@@ -623,7 +624,7 @@ trait FormatsResults
                 continue;
             }
 
-            $metric = $result->regressionMetric ?? 'median';
+            $metric = $result->regressionMetric ?? Metric::Median;
             $tolerance = $result->regressionTolerance ?? 'n/a';
             $decision = $evaluator->evaluate(
                 current: $result,
@@ -644,7 +645,7 @@ trait FormatsResults
                 'ratio' => $this->baselineRatio($result, $baselineResult),
                 'percent_faster' => $this->baselinePercentFaster($result, $baselineResult),
                 'significance' => $this->formatSignificance($significance->compare($baselineResult->samples, $result->samples)),
-                'regression_label' => sprintf('%s @ %s', $metric, $tolerance),
+                'regression_label' => sprintf('%s @ %s', $metric->value, $tolerance),
             ];
         }
 

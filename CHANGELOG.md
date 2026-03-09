@@ -9,3 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release
+- Enum-backed public configuration and benchmark metadata types
+- Repository-local agent instructions in `AGENTS.md`
+
+### Changed
+- Assertion and regression metadata now use enum cases instead of raw strings

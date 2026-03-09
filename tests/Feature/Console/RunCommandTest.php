@@ -89,8 +89,9 @@ describe('bench run', function (): void {
 <?php declare(strict_types=1);
 
 use Cline\Bench\Configuration\BenchConfig;
+use Cline\Bench\Enums\ReportFormat;
 
-return BenchConfig::default()->withDefaultReportFormat('md');
+return BenchConfig::default()->withDefaultReportFormat(ReportFormat::Markdown);
 PHP);
 
         chdir($workingDirectory);
@@ -250,10 +251,12 @@ PHP);
 <?php declare(strict_types=1);
 
 use Cline\Bench\Configuration\BenchConfig;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\TimeUnit;
 
 return BenchConfig::default()
-    ->withProgressMetric('average')
-    ->withProgressTimeUnit('ms');
+    ->withProgressMetric(Metric::Mean)
+    ->withProgressTimeUnit(TimeUnit::Milliseconds);
 PHP);
 
         chdir($workingDirectory);
@@ -328,8 +331,9 @@ PHP);
 <?php declare(strict_types=1);
 
 use Cline\Bench\Configuration\BenchConfig;
+use Cline\Bench\Enums\ComparisonReference;
 
-return BenchConfig::default()->withComparisonReference('slowest');
+return BenchConfig::default()->withComparisonReference(ComparisonReference::Slowest);
 PHP);
 
         chdir($workingDirectory);

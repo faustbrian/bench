@@ -13,6 +13,8 @@ use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Discovery\BenchmarkAssertion;
 use Cline\Bench\Discovery\BenchmarkDiscovery;
 use Cline\Bench\Discovery\DiscoveredBenchmark;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Statistics\SummaryStatistics;
 use Cline\Bench\Statistics\SummaryStatisticsCalculator;
 use RuntimeException;
@@ -142,7 +144,7 @@ final readonly class BenchmarkRunner
             parameters: $parameters,
             groups: $benchmark->groups,
             assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
-            regressionMetric: $benchmark->regressionMetric !== '' ? $benchmark->regressionMetric : null,
+            regressionMetric: $benchmark->regressionMetric,
             regressionTolerance: $benchmark->regressionTolerance !== '' ? $benchmark->regressionTolerance : null,
         );
     }
@@ -231,7 +233,7 @@ final readonly class BenchmarkRunner
             parameters: $parameters,
             groups: $benchmark->groups,
             assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
-            regressionMetric: $benchmark->regressionMetric !== '' ? $benchmark->regressionMetric : null,
+            regressionMetric: $benchmark->regressionMetric,
             regressionTolerance: $benchmark->regressionTolerance !== '' ? $benchmark->regressionTolerance : null,
         );
     }
@@ -347,30 +349,28 @@ PHP;
         return $results;
     }
 
-    private function metricValue(SummaryStatistics $summary, string $metric): float
+    private function metricValue(SummaryStatistics $summary, Metric $metric): float
     {
         return match ($metric) {
-            'min' => $summary->min,
-            'max' => $summary->max,
-            'mean' => $summary->mean,
-            'median' => $summary->median,
-            'p75', 'percentile75' => $summary->percentile75,
-            'p95', 'percentile95' => $summary->percentile95,
-            'p99', 'percentile99' => $summary->percentile99,
-            'ops/s', 'operations_per_second' => $summary->operationsPerSecond,
-            default => $summary->median,
+            Metric::Minimum => $summary->min,
+            Metric::Maximum => $summary->max,
+            Metric::Mean => $summary->mean,
+            Metric::Median => $summary->median,
+            Metric::Percentile75 => $summary->percentile75,
+            Metric::Percentile95 => $summary->percentile95,
+            Metric::Percentile99 => $summary->percentile99,
+            Metric::OperationsPerSecond => $summary->operationsPerSecond,
         };
     }
 
-    private function compare(float $actual, string $operator, float $expected): bool
+    private function compare(float $actual, AssertionOperator $operator, float $expected): bool
     {
         return match ($operator) {
-            '<' => $actual < $expected,
-            '<=' => $actual <= $expected,
-            '>' => $actual > $expected,
-            '>=' => $actual >= $expected,
-            '=', '==' => $actual === $expected,
-            default => false,
+            AssertionOperator::LessThan => $actual < $expected,
+            AssertionOperator::LessThanOrEqual => $actual <= $expected,
+            AssertionOperator::GreaterThan => $actual > $expected,
+            AssertionOperator::GreaterThanOrEqual => $actual >= $expected,
+            AssertionOperator::Equal => $actual === $expected,
         };
     }
 }

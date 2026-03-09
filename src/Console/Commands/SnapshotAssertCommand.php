@@ -120,7 +120,7 @@ final class SnapshotAssertCommand extends Command
                 $result->subject,
                 $result->competitor,
                 $decision->deltaPercentage,
-                $metric,
+                $metric->value,
                 $effectiveTolerance,
             ));
 

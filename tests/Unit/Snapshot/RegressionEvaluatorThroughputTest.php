@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Snapshot\RegressionEvaluator;
 use Cline\Bench\Statistics\SummaryStatistics;
@@ -31,7 +32,7 @@ describe('RegressionEvaluator throughput', function (): void {
             samples: [90_000.0, 95_000.0, 100_000.0, 105_000.0, 110_000.0],
         );
 
-        $decision = $evaluator->evaluate($current, $baseline, '5%', 'ops/s');
+        $decision = $evaluator->evaluate($current, $baseline, '5%', Metric::OperationsPerSecond);
 
         expect($decision->passed)->toBeFalse()
             ->and(abs($decision->deltaPercentage - 10.0))->toBeLessThan(0.001);

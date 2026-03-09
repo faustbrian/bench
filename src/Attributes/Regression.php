@@ -10,6 +10,7 @@
 namespace Cline\Bench\Attributes;
 
 use Attribute;
+use Cline\Bench\Enums\Metric;
 
 /**
  * @psalm-immutable
@@ -19,7 +20,7 @@ use Attribute;
 final readonly class Regression
 {
     public function __construct(
-        public string $metric = 'median',
+        public Metric $metric = Metric::Median,
         public string $tolerance = '5%',
     ) {}
 }
