@@ -1,6 +1,6 @@
 ## Table of Contents
 
-1. [Json Schema](#doc-docs-json-schema) (`docs/json-schema.md`)
+1. [Json Schema](#doc-docs-json-schema)
 <a id="doc-docs-json-schema"></a>
 
 # JSON Schema
