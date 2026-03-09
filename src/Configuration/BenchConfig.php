@@ -53,6 +53,9 @@ final readonly class BenchConfig
         public int $ratioDecimals = 2,
         public int $percentageDecimals = 1,
         public int $deltaPercentageDecimals = 2,
+        public bool $significanceEnabled = true,
+        public float $significanceAlpha = 0.05,
+        public int $significanceMinimumSamples = 2,
         public CompatibilityMode $compatibilityMode = CompatibilityMode::Warn,
     ) {}
 
@@ -208,6 +211,24 @@ final readonly class BenchConfig
         );
     }
 
+    public function withSignificance(float $alpha = 0.05, int $minimumSamples = 2): self
+    {
+        return $this->copy(
+            significanceEnabled: true,
+            significanceEnabledIsSet: true,
+            significanceAlpha: $alpha,
+            significanceMinimumSamples: $minimumSamples,
+        );
+    }
+
+    public function withoutSignificance(): self
+    {
+        return $this->copy(
+            significanceEnabled: false,
+            significanceEnabledIsSet: true,
+        );
+    }
+
     public function withCompatibilityMode(CompatibilityMode $compatibilityMode): self
     {
         return $this->copy(compatibilityMode: $compatibilityMode);
@@ -249,6 +270,10 @@ final readonly class BenchConfig
         ?int $ratioDecimals = null,
         ?int $percentageDecimals = null,
         ?int $deltaPercentageDecimals = null,
+        bool $significanceEnabled = false,
+        bool $significanceEnabledIsSet = false,
+        ?float $significanceAlpha = null,
+        ?int $significanceMinimumSamples = null,
         ?CompatibilityMode $compatibilityMode = null,
     ): self {
         return new self(
@@ -280,6 +305,9 @@ final readonly class BenchConfig
             ratioDecimals: $ratioDecimals ?? $this->ratioDecimals,
             percentageDecimals: $percentageDecimals ?? $this->percentageDecimals,
             deltaPercentageDecimals: $deltaPercentageDecimals ?? $this->deltaPercentageDecimals,
+            significanceEnabled: $significanceEnabledIsSet ? $significanceEnabled : $this->significanceEnabled,
+            significanceAlpha: $significanceAlpha ?? $this->significanceAlpha,
+            significanceMinimumSamples: $significanceMinimumSamples ?? $this->significanceMinimumSamples,
             compatibilityMode: $compatibilityMode ?? $this->compatibilityMode,
         );
     }

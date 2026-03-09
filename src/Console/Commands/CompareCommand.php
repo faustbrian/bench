@@ -79,6 +79,12 @@ final class CompareCommand extends Command
 
     private int $deltaPercentageDecimals = 2;
 
+    private bool $significanceEnabled = true;
+
+    private float $significanceAlpha = 0.05;
+
+    private int $significanceMinimumSamples = 2;
+
     #[Override()]
     protected function configure(): void
     {
@@ -91,7 +97,8 @@ final class CompareCommand extends Command
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
             ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor')
             ->addOption('fail-on-winner-change', null, InputOption::VALUE_NONE, 'Fail when a benchmark winner changes versus the baseline suite')
-            ->addOption('min-reference-gap', null, InputOption::VALUE_REQUIRED, 'Require each current reference gap to stay above the given threshold');
+            ->addOption('min-reference-gap', null, InputOption::VALUE_REQUIRED, 'Require each current reference gap to stay above the given threshold')
+            ->addOption('no-significance', null, InputOption::VALUE_NONE, 'Disable significance calculation in rendered reports and policies');
     }
 
     #[Override()]
@@ -109,6 +116,9 @@ final class CompareCommand extends Command
         $this->ratioDecimals = $config->ratioDecimals;
         $this->percentageDecimals = $config->percentageDecimals;
         $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
+        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $config->significanceAlpha;
+        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $current = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
@@ -154,6 +164,9 @@ final class CompareCommand extends Command
                         'default_iterations' => $config->defaultIterations,
                         'default_revolutions' => $config->defaultRevolutions,
                         'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'significance_enabled' => $this->significanceEnabled,
+                        'significance_alpha' => $this->significanceAlpha,
+                        'significance_minimum_samples' => $this->significanceMinimumSamples,
                     ],
                 ],
                 'baseline' => $snapshot->metadata,
@@ -168,6 +181,9 @@ final class CompareCommand extends Command
                         'default_iterations' => $config->defaultIterations,
                         'default_revolutions' => $config->defaultRevolutions,
                         'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'significance_enabled' => $this->significanceEnabled,
+                        'significance_alpha' => $this->significanceAlpha,
+                        'significance_minimum_samples' => $this->significanceMinimumSamples,
                     ],
                     'selection' => $selection->toArray(),
                 ],
@@ -182,6 +198,9 @@ final class CompareCommand extends Command
                         'default_iterations' => $config->defaultIterations,
                         'default_revolutions' => $config->defaultRevolutions,
                         'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'significance_enabled' => $this->significanceEnabled,
+                        'significance_alpha' => $this->significanceAlpha,
+                        'significance_minimum_samples' => $this->significanceMinimumSamples,
                     ],
                     'selection' => $selection->toArray(),
                 ],
@@ -262,6 +281,21 @@ final class CompareCommand extends Command
     protected function deltaPercentageDecimals(): int
     {
         return $this->deltaPercentageDecimals;
+    }
+
+    protected function significanceEnabled(): bool
+    {
+        return $this->significanceEnabled;
+    }
+
+    protected function significanceAlpha(): float
+    {
+        return $this->significanceAlpha;
+    }
+
+    protected function significanceMinimumSamples(): int
+    {
+        return $this->significanceMinimumSamples;
     }
 
     private function nullableArgumentString(InputInterface $input, string $name): ?string

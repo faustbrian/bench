@@ -24,19 +24,29 @@ use function usort;
  */
 final class SignificanceCalculator
 {
+    public function __construct(
+        private readonly bool $enabled = true,
+        private readonly float $alpha = 0.05,
+        private readonly int $minimumSamples = 2,
+    ) {}
+
     /**
      * @param list<float> $baseline
      * @param list<float> $candidate
      */
     public function compare(array $baseline, array $candidate): string
     {
-        if (count($baseline) < 2 || count($candidate) < 2) {
+        if (!$this->enabled) {
+            return 'disabled';
+        }
+
+        if (count($baseline) < $this->minimumSamples || count($candidate) < $this->minimumSamples) {
             return 'n/a';
         }
 
         $pValue = $this->pValue($baseline, $candidate);
 
-        if ($pValue < 0.05) {
+        if ($pValue < $this->alpha) {
             return sprintf('significant (p=%.3f)', $pValue);
         }
 

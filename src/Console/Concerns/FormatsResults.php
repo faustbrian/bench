@@ -119,6 +119,21 @@ trait FormatsResults
         return 2;
     }
 
+    protected function significanceEnabled(): bool
+    {
+        return true;
+    }
+
+    protected function significanceAlpha(): float
+    {
+        return 0.05;
+    }
+
+    protected function significanceMinimumSamples(): int
+    {
+        return 2;
+    }
+
     /**
      * @param array<string, string> $rows
      */
@@ -300,7 +315,7 @@ trait FormatsResults
 
         $comparisonById = [];
 
-        foreach (new ComparisonEngine()->compare($results, $this->comparisonReference())->rows as $row) {
+        foreach ($this->comparisonEngine()->compare($results, $this->comparisonReference())->rows as $row) {
             $comparisonById[$row->result->identifier()] = $row;
         }
 
@@ -378,7 +393,7 @@ trait FormatsResults
 
         $comparisonById = [];
 
-        foreach (new ComparisonEngine()->compare($results, $this->comparisonReference())->rows as $row) {
+        foreach ($this->comparisonEngine()->compare($results, $this->comparisonReference())->rows as $row) {
             $comparisonById[$row->result->identifier()] = $row;
         }
 
@@ -580,7 +595,7 @@ trait FormatsResults
      */
     private function comparisonPayload(array $results): array
     {
-        $comparison = new ComparisonEngine()->compare($results, $this->comparisonReference());
+        $comparison = $this->comparisonEngine()->compare($results, $this->comparisonReference());
 
         return [
             'rows' => array_map(
@@ -616,7 +631,7 @@ trait FormatsResults
 
         $rows = [];
         $evaluator = new RegressionEvaluator();
-        $significance = new SignificanceCalculator();
+        $significance = $this->significanceCalculator();
 
         foreach ($results as $result) {
             $baselineResult = $baselineById[$result->identifier()] ?? null;
@@ -643,8 +658,8 @@ trait FormatsResults
                 'baseline_median' => $baselineResult->summary->median,
                 'delta_percentage' => $decision->deltaPercentage,
                 'winner' => $this->baselineWinner($result, $baselineResult),
-                'reference_gap' => $this->baselineRatio($result, $baselineResult),
-                'reference_gain' => $this->baselinePercentFaster($result, $baselineResult),
+                'reference_gap' => $this->baselineReferenceGap($result, $baselineResult),
+                'reference_gain' => $this->baselineReferenceGain($result, $baselineResult),
                 'significance' => $this->formatSignificance($significance->compare($baselineResult->samples, $result->samples)),
                 'regression_label' => sprintf('%s @ %s', $metric->value, $tolerance),
             ];
@@ -681,7 +696,7 @@ trait FormatsResults
         return $current->summary->median < $baseline->summary->median ? 'current' : 'baseline';
     }
 
-    private function baselineRatio(BenchmarkResult $current, BenchmarkResult $baseline): float
+    private function baselineReferenceGap(BenchmarkResult $current, BenchmarkResult $baseline): float
     {
         $fastest = min($current->summary->median, $baseline->summary->median);
         $slowest = max($current->summary->median, $baseline->summary->median);
@@ -689,7 +704,7 @@ trait FormatsResults
         return $slowest / max($fastest, 1.0);
     }
 
-    private function baselinePercentFaster(BenchmarkResult $current, BenchmarkResult $baseline): float
+    private function baselineReferenceGain(BenchmarkResult $current, BenchmarkResult $baseline): float
     {
         if ($current->summary->median === $baseline->summary->median) {
             return 0.0;
@@ -762,10 +777,25 @@ trait FormatsResults
     private function formatSignificance(string $value): string
     {
         return match (true) {
+            $value === 'disabled' => 'disabled',
             $value === 'winner' => 'fastest',
             str_starts_with($value, 'ns ') => str_replace('ns ', 'not significant ', $value),
             default => $value,
         };
+    }
+
+    private function significanceCalculator(): SignificanceCalculator
+    {
+        return new SignificanceCalculator(
+            enabled: $this->significanceEnabled(),
+            alpha: $this->significanceAlpha(),
+            minimumSamples: $this->significanceMinimumSamples(),
+        );
+    }
+
+    private function comparisonEngine(): ComparisonEngine
+    {
+        return new ComparisonEngine($this->significanceCalculator());
     }
 
     /**

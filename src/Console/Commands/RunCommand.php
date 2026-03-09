@@ -96,6 +96,12 @@ final class RunCommand extends Command
 
     private int $deltaPercentageDecimals = 2;
 
+    private bool $significanceEnabled = true;
+
+    private float $significanceAlpha = 0.05;
+
+    private int $significanceMinimumSamples = 2;
+
     #[Override()]
     protected function configure(): void
     {
@@ -106,6 +112,7 @@ final class RunCommand extends Command
         $this->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group');
         $this->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor');
         $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Suppress live benchmark progress output');
+        $this->addOption('no-significance', null, InputOption::VALUE_NONE, 'Disable significance calculation in rendered reports');
     }
 
     #[Override()]
@@ -127,6 +134,9 @@ final class RunCommand extends Command
         $this->ratioDecimals = $config->ratioDecimals;
         $this->percentageDecimals = $config->percentageDecimals;
         $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
+        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $config->significanceAlpha;
+        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
         $this->bootstrap($config);
         $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value;
         $selection = $this->selection($input);
@@ -286,6 +296,21 @@ final class RunCommand extends Command
         return $this->deltaPercentageDecimals;
     }
 
+    protected function significanceEnabled(): bool
+    {
+        return $this->significanceEnabled;
+    }
+
+    protected function significanceAlpha(): float
+    {
+        return $this->significanceAlpha;
+    }
+
+    protected function significanceMinimumSamples(): int
+    {
+        return $this->significanceMinimumSamples;
+    }
+
     private function benchmarkPath(InputInterface $input, BenchConfig $config): string
     {
         $value = $input->getArgument('path');
@@ -359,6 +384,9 @@ final class RunCommand extends Command
                 'default_iterations' => $config->defaultIterations,
                 'default_revolutions' => $config->defaultRevolutions,
                 'default_warmup_iterations' => $config->defaultWarmupIterations,
+                'significance_enabled' => $this->significanceEnabled,
+                'significance_alpha' => $this->significanceAlpha,
+                'significance_minimum_samples' => $this->significanceMinimumSamples,
             ],
         ];
     }

@@ -47,6 +47,9 @@ describe('BenchConfig', function (): void {
             ->and($config->ratioDecimals)->toBe(2)
             ->and($config->percentageDecimals)->toBe(1)
             ->and($config->deltaPercentageDecimals)->toBe(2)
+            ->and($config->significanceEnabled)->toBeTrue()
+            ->and($config->significanceAlpha)->toBe(0.05)
+            ->and($config->significanceMinimumSamples)->toBe(2)
             ->and($config->compatibilityMode)->toBe(CompatibilityMode::Warn);
     });
 
@@ -89,6 +92,7 @@ return BenchConfig::default()
     ->withProgressDecimals(timeDecimals: 0, operationsDecimals: 0)
     ->withRatioDecimals(3)
     ->withPercentageDecimals(2, 4)
+    ->withSignificance(alpha: 0.01, minimumSamples: 5)
     ->withCompatibilityMode(CompatibilityMode::Fail);
 PHP);
 
@@ -122,6 +126,9 @@ PHP);
             ->and($config->ratioDecimals)->toBe(3)
             ->and($config->percentageDecimals)->toBe(2)
             ->and($config->deltaPercentageDecimals)->toBe(4)
+            ->and($config->significanceEnabled)->toBeTrue()
+            ->and($config->significanceAlpha)->toBe(0.01)
+            ->and($config->significanceMinimumSamples)->toBe(5)
             ->and($config->compatibilityMode)->toBe(CompatibilityMode::Fail);
     });
 });

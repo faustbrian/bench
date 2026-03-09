@@ -95,4 +95,47 @@ describe('bench report', function (): void {
             }
         }
     });
+
+    it('can disable significance in comparison reports', function (): void {
+        $workingDirectory = sys_get_temp_dir().'/bench-report-significance-'.bin2hex(random_bytes(8));
+        mkdir($workingDirectory, 0o755, true);
+        $previousDirectory = getcwd();
+
+        file_put_contents($workingDirectory.'/bench.php', <<<'PHP'
+<?php declare(strict_types=1);
+
+use Cline\Bench\Configuration\BenchConfig;
+
+return BenchConfig::default()->withoutSignificance();
+PHP);
+
+        chdir($workingDirectory);
+
+        try {
+            $application = new BenchApplication();
+            $fixturePath = __DIR__.'/../../Fixtures/Benchmarks';
+
+            expect(
+                new CommandTester($application->find('snapshot:save'))->execute([
+                    'command' => 'snapshot:save',
+                    'name' => 'baseline',
+                    'path' => $fixturePath,
+                ]),
+            )->toBe(0);
+
+            $tester = new CommandTester($application->find('report'));
+
+            expect($tester->execute([
+                'command' => 'report',
+                'path' => $fixturePath,
+                '--format' => 'md',
+                '--against' => 'baseline',
+            ]))->toBe(0)
+                ->and($tester->getDisplay())->toContain('disabled');
+        } finally {
+            if ($previousDirectory !== false) {
+                chdir($previousDirectory);
+            }
+        }
+    });
 });

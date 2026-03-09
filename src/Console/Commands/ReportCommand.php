@@ -76,6 +76,12 @@ final class ReportCommand extends Command
 
     private int $deltaPercentageDecimals = 2;
 
+    private bool $significanceEnabled = true;
+
+    private float $significanceAlpha = 0.05;
+
+    private int $significanceMinimumSamples = 2;
+
     #[Override()]
     protected function configure(): void
     {
@@ -85,7 +91,8 @@ final class ReportCommand extends Command
             ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Optional snapshot name to compare against')
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Only run benchmarks matching the given text')
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
-            ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor');
+            ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor')
+            ->addOption('no-significance', null, InputOption::VALUE_NONE, 'Disable significance calculation in rendered reports');
     }
 
     #[Override()]
@@ -103,6 +110,9 @@ final class ReportCommand extends Command
         $this->ratioDecimals = $config->ratioDecimals;
         $this->percentageDecimals = $config->percentageDecimals;
         $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
+        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $config->significanceAlpha;
+        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $results = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
@@ -219,6 +229,21 @@ final class ReportCommand extends Command
         return $this->deltaPercentageDecimals;
     }
 
+    protected function significanceEnabled(): bool
+    {
+        return $this->significanceEnabled;
+    }
+
+    protected function significanceAlpha(): float
+    {
+        return $this->significanceAlpha;
+    }
+
+    protected function significanceMinimumSamples(): int
+    {
+        return $this->significanceMinimumSamples;
+    }
+
     /**
      * @param list<BenchmarkResult> $results
      */
@@ -280,6 +305,11 @@ final class ReportCommand extends Command
         return array_values(array_filter($value, is_string(...)));
     }
 
+    private function flag(InputInterface $input, string $name): bool
+    {
+        return (bool) $input->getOption($name);
+    }
+
     private function selection(InputInterface $input): BenchmarkSelection
     {
         return new BenchmarkSelection(
@@ -305,6 +335,9 @@ final class ReportCommand extends Command
                 'default_iterations' => $config->defaultIterations,
                 'default_revolutions' => $config->defaultRevolutions,
                 'default_warmup_iterations' => $config->defaultWarmupIterations,
+                'significance_enabled' => $this->significanceEnabled,
+                'significance_alpha' => $this->significanceAlpha,
+                'significance_minimum_samples' => $this->significanceMinimumSamples,
             ],
         ];
     }
