@@ -1,6 +1,8 @@
 ## Table of Contents
 
-1. Json Schema (`docs/json-schema.md`)
+1. [Json Schema](#doc-docs-json-schema) (`docs/json-schema.md`)
+<a id="doc-docs-json-schema"></a>
+
 # JSON Schema
 
 `bench` emits a versioned JSON contract. Consumers MUST branch on
