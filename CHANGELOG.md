@@ -17,3 +17,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Revs` has been renamed to `Revolutions` in the public benchmark API
 - Parameterized benchmark identities now use canonical labels, with
   optional `_case` names for stable snapshots and named cases
+- Compare policies now enforce the configured reference gap, and the
+  public threshold flag is `--min-reference-gap`

@@ -9,12 +9,15 @@
 
 namespace Cline\Bench\Comparison;
 
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Execution\BenchmarkResult;
 
 use function array_key_exists;
+use function array_last;
 use function count;
 use function max;
 use function sprintf;
+use function usort;
 
 /**
  * @author Brian Faust <brian@cline.sh>
@@ -30,12 +33,13 @@ final readonly class ComparePolicyEvaluator
         array $current,
         array $baseline,
         bool $failOnWinnerChange,
-        ?float $minimumRatio,
+        ?float $minimumReferenceGap,
+        ComparisonReference $comparisonReference,
     ): ComparePolicyDecision {
         $violations = [];
 
-        $currentSummary = $this->suiteSummary($current);
-        $baselineSummary = $this->suiteSummary($baseline);
+        $currentSummary = $this->suiteSummary($current, $comparisonReference);
+        $baselineSummary = $this->suiteSummary($baseline, $comparisonReference);
 
         if ($failOnWinnerChange) {
             foreach ($currentSummary as $identifier => $currentRow) {
@@ -58,17 +62,17 @@ final readonly class ComparePolicyEvaluator
             }
         }
 
-        if ($minimumRatio !== null) {
+        if ($minimumReferenceGap !== null) {
             foreach ($currentSummary as $identifier => $currentRow) {
-                if ($currentRow['ratio'] >= $minimumRatio) {
+                if ($currentRow['reference_gap'] >= $minimumReferenceGap) {
                     continue;
                 }
 
                 $violations[] = sprintf(
-                    '%s ratio %.2fx is below required %.2fx',
+                    '%s reference gap %.2fx is below required %.2fx',
                     $identifier,
-                    $currentRow['ratio'],
-                    $minimumRatio,
+                    $currentRow['reference_gap'],
+                    $minimumReferenceGap,
                 );
             }
         }
@@ -80,10 +84,10 @@ final readonly class ComparePolicyEvaluator
     }
 
     /**
-     * @param  list<BenchmarkResult>                              $results
-     * @return array<string, array{winner: string, ratio: float}>
+     * @param  list<BenchmarkResult>                                      $results
+     * @return array<string, array{winner: string, reference_gap: float}>
      */
-    private function suiteSummary(array $results): array
+    private function suiteSummary(array $results, ComparisonReference $comparisonReference): array
     {
         $grouped = [];
 
@@ -100,29 +104,38 @@ final readonly class ComparePolicyEvaluator
                         continue;
                     }
 
+                    usort(
+                        $parameterResults,
+                        static fn (BenchmarkResult $left, BenchmarkResult $right): int => $left->summary->median <=> $right->summary->median,
+                    );
+
                     $fastest = $parameterResults[0];
-                    $slowest = $parameterResults[0];
-
-                    foreach ($parameterResults as $result) {
-                        if ($result->summary->median < $fastest->summary->median) {
-                            $fastest = $result;
-                        }
-
-                        if ($result->summary->median <= $slowest->summary->median) {
-                            continue;
-                        }
-
-                        $slowest = $result;
-                    }
+                    $reference = $this->referenceResult($parameterResults, $comparisonReference);
 
                     $summary[sprintf('%s::%s::%s', $scenario, $subject, $parameterLabel)] = [
                         'winner' => $fastest->competitor,
-                        'ratio' => $slowest->summary->median / max($fastest->summary->median, 1.0),
+                        'reference_gap' => $reference->summary->median / max($fastest->summary->median, 1.0),
                     ];
                 }
             }
         }
 
         return $summary;
+    }
+
+    /**
+     * @param list<BenchmarkResult> $parameterResults
+     */
+    private function referenceResult(array $parameterResults, ComparisonReference $comparisonReference): BenchmarkResult
+    {
+        if (count($parameterResults) < 2) {
+            return $parameterResults[0];
+        }
+
+        if ($comparisonReference === ComparisonReference::Slowest || count($parameterResults) === 2) {
+            return array_last($parameterResults);
+        }
+
+        return $parameterResults[1];
     }
 }

@@ -327,15 +327,15 @@ Flags:
 - `--group=<group>` and repeated `--group=<group>`
 - `--competitor=<id>` and repeated `--competitor=<id>`
 - `--fail-on-winner-change`
-- `--min-ratio=<float>`
+- `--min-reference-gap=<float>`
 
 Examples:
 
 ```bash
 vendor/bin/bench compare baseline --format=md
 vendor/bin/bench compare baseline --fail-on-winner-change
-vendor/bin/bench compare baseline --min-ratio=2
-vendor/bin/bench compare baseline --fail-on-winner-change --min-ratio=2
+vendor/bin/bench compare baseline --min-reference-gap=2
+vendor/bin/bench compare baseline --fail-on-winner-change --min-reference-gap=2
 ```
 
 Behavior:
@@ -467,7 +467,7 @@ CSV output is intended for spreadsheet import or downstream aggregation.
 ## Reading Comparison Output
 
 For multi-competitor suites, the comparison summary focuses on the
-fastest competitor in each row.
+fastest competitor in each row and a configured reference competitor.
 
 Key fields:
 
@@ -479,7 +479,9 @@ Key fields:
 
 If `withComparisonReference('slowest')` is configured, the summary gap
 and gain columns are computed against the slowest competitor instead of
-the closest competitor.
+the closest competitor. Compare policies use that same configured
+reference, so `--min-reference-gap` always enforces the same gap that
+the summary columns describe.
 
 ## `bench.php` Configuration
 
@@ -749,7 +751,7 @@ vendor/bin/bench snapshot:assert baseline --tolerance=5%
 Fail CI when comparison quality changes:
 
 ```bash
-vendor/bin/bench compare baseline --fail-on-winner-change --min-ratio=2
+vendor/bin/bench compare baseline --fail-on-winner-change --min-reference-gap=2
 ```
 
 Render a PR-friendly comparison artifact:

@@ -29,7 +29,7 @@ composer require --dev cline/bench
 
 - attribute-first benchmark authoring
 - built-in snapshots, saved runs, and `latest` aliases
-- comparison tables with winners, ratios, percent faster, and `ops/s`
+- comparison tables with winners, reference gaps, reference gains, and `ops/s`
 - regression assertions and comparison exit policies for CI
 - parameterized benchmarks, groups, selectors, calibration, and process isolation
 

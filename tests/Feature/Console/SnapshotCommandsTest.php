@@ -104,6 +104,16 @@ PHP);
             expect(file_exists($workingDirectory.'/.benchmarks/snapshots/baseline.json'))->toBeTrue();
 
             $snapshotPath = $workingDirectory.'/.benchmarks/snapshots/baseline.json';
+
+            /**
+             * @var array{
+             *     metadata: array{
+             *         environment: array{
+             *             php_version: string
+             *         }
+             *     }
+             * } $snapshot
+             */
             $snapshot = json_decode((string) file_get_contents($snapshotPath), true, flags: \JSON_THROW_ON_ERROR);
             $snapshot['metadata']['environment']['php_version'] = '0.0.0-test';
             file_put_contents($snapshotPath, json_encode($snapshot, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR));
@@ -285,7 +295,7 @@ PHP);
         }
     });
 
-    it('fails compare when the winner changes or the spread drops below a required ratio', function (): void {
+    it('fails compare when the winner changes or the reference gap drops below a required threshold', function (): void {
         $workingDirectory = sys_get_temp_dir().'/bench-compare-policies-'.bin2hex(random_bytes(8));
         mkdir($workingDirectory, 0o755, true);
         $previousDirectory = getcwd();
@@ -305,6 +315,17 @@ PHP);
             )->toBe(0);
 
             $snapshotPath = $workingDirectory.'/.bench/snapshots/baseline.json';
+
+            /**
+             * @var array{
+             *     results: list<array{
+             *         scenario: string,
+             *         subject: string,
+             *         competitor: string,
+             *         summary: array{median: float}
+             *     }>
+             * } $snapshot
+             */
             $snapshot = json_decode((string) file_get_contents($snapshotPath), true, flags: \JSON_THROW_ON_ERROR);
 
             foreach ($snapshot['results'] as &$result) {
@@ -336,11 +357,11 @@ PHP);
                 'against' => 'baseline',
                 'path' => $fixturePath,
                 '--fail-on-winner-change' => true,
-                '--min-ratio' => '10',
+                '--min-reference-gap' => '10',
             ]))->toBe(1)
                 ->and($compareTester->getDisplay())->toContain('Compare policies failed')
                 ->and($compareTester->getDisplay())->toContain('winner changed')
-                ->and($compareTester->getDisplay())->toContain('ratio');
+                ->and($compareTester->getDisplay())->toContain('reference gap');
         } finally {
             if ($previousDirectory !== false) {
                 chdir($previousDirectory);

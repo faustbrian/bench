@@ -91,7 +91,7 @@ final class CompareCommand extends Command
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
             ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor')
             ->addOption('fail-on-winner-change', null, InputOption::VALUE_NONE, 'Fail when a benchmark winner changes versus the baseline suite')
-            ->addOption('min-ratio', null, InputOption::VALUE_REQUIRED, 'Require each current comparison ratio to stay above the given threshold');
+            ->addOption('min-reference-gap', null, InputOption::VALUE_REQUIRED, 'Require each current reference gap to stay above the given threshold');
     }
 
     #[Override()]
@@ -133,7 +133,8 @@ final class CompareCommand extends Command
             current: $current,
             baseline: $snapshot->results,
             failOnWinnerChange: $this->flag($input, 'fail-on-winner-change'),
-            minimumRatio: $this->nullableFloatOption($input, 'min-ratio'),
+            minimumReferenceGap: $this->nullableFloatOption($input, 'min-reference-gap'),
+            comparisonReference: $this->comparisonReference,
         );
 
         $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value) {

@@ -38,11 +38,20 @@ describe('baloo-shaped workflow', function (): void {
                 '--format' => 'json',
             ]))->toBe(0);
 
+            /**
+             * @var array{
+             *     results: list<array<string, mixed>>,
+             *     comparison: array{
+             *         rows: list<array<string, mixed>>,
+             *         geometric_mean_reference_gap: float
+             *     }
+             * } $runPayload
+             */
             $runPayload = json_decode($runTester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
 
             expect($runPayload['results'])->toHaveCount(24)
                 ->and($runPayload['comparison']['rows'])->toHaveCount(24)
-                ->and($runPayload['comparison'])->toHaveKey('geometric_mean_speed_ratio')
+                ->and($runPayload['comparison'])->toHaveKey('geometric_mean_reference_gap')
                 ->and($runPayload['results'][0])->toHaveKey('groups');
 
             expect($compareTester->execute([

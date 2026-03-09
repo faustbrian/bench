@@ -9,4 +9,4 @@
 - Struct wins 1/1 benchmarks.
 - Spatie wins 0/1 benchmarks.
 - Spatie average gap: 20.0% slower than fastest.
-- Geometric mean spread: 1.20x.
+- Geometric mean reference gap: 1.20x.

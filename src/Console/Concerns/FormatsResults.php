@@ -484,7 +484,7 @@ trait FormatsResults
             );
         }
 
-        $overall['Geometric mean spread'] = $this->formatRatio($this->geometricMean($summary['ratios']));
+        $overall['Geometric mean reference gap'] = $this->formatRatio($this->geometricMean($summary['ratios']));
 
         return $this->prependPlainMetadata(implode(PHP_EOL.PHP_EOL, [
             $this->renderPlainDetailSection('Overall', $overall, 'amber'),
@@ -533,7 +533,7 @@ trait FormatsResults
             $lines[] = sprintf('- %s average gap: %s slower than fastest.', $this->displayCompetitorLabel($competitor), $this->formatPercentage($averageGap));
         }
 
-        $lines[] = sprintf('- Geometric mean spread: %s.', $this->formatRatio($this->geometricMean($summary['ratios'])));
+        $lines[] = sprintf('- Geometric mean reference gap: %s.', $this->formatRatio($this->geometricMean($summary['ratios'])));
 
         return $this->prependMarkdownMetadata(implode(PHP_EOL, $lines), $metadata);
     }
@@ -574,8 +574,8 @@ trait FormatsResults
     }
 
     /**
-     * @param  list<BenchmarkResult>                                                      $results
-     * @return array{rows: list<array<string, mixed>>, geometric_mean_speed_ratio: float}
+     * @param  list<BenchmarkResult>                                                        $results
+     * @return array{rows: list<array<string, mixed>>, geometric_mean_reference_gap: float}
      */
     private function comparisonPayload(array $results): array
     {
@@ -590,13 +590,13 @@ trait FormatsResults
                     'parameters' => $row->result->parameters,
                     'winner' => $row->winner,
                     'delta_percentage' => $row->deltaPercentage,
-                    'speed_ratio' => $row->speedRatio,
-                    'percent_faster' => $row->percentFaster,
+                    'reference_gap' => $row->speedRatio,
+                    'reference_gain' => $row->percentFaster,
                     'significance' => $this->formatSignificance($row->significance ?? 'n/a'),
                 ],
                 $comparison->rows,
             ),
-            'geometric_mean_speed_ratio' => $comparison->geometricMeanSpeedRatio,
+            'geometric_mean_reference_gap' => $comparison->geometricMeanSpeedRatio,
         ];
     }
 
