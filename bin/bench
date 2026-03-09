@@ -1,5 +1,7 @@
 #!/usr/bin/env php
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Copyright (C) Brian Faust
@@ -10,6 +12,21 @@
 
 use Cline\Bench\Console\BenchApplication;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+$autoloadCandidates = [
+    dirname(__DIR__).'/vendor/autoload.php',
+    dirname(__DIR__, 3).'/autoload.php',
+];
 
-exit((new BenchApplication())->run());
+foreach ($autoloadCandidates as $autoloadPath) {
+    if (!file_exists($autoloadPath)) {
+        continue;
+    }
+
+    require $autoloadPath;
+
+    exit(new BenchApplication()->run());
+}
+
+fwrite(\STDERR, "Unable to locate Composer autoload.php for bench.\n");
+
+exit(1);
