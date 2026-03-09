@@ -5,15 +5,13 @@
 
 # bench Usage
 
-`bench` is a modern PHP benchmarking package built for two workflows:
+`bench` is a PHP 8.5+ benchmarking package for two common workflows:
 
-- regression tracking for your own package over time
-- comparison suites across multiple implementations
+- benchmarking your own package over time and failing on regressions
+- benchmarking multiple competitors side by side with comparison-first output
 
-It keeps the authoring model simple, but ships the operational pieces
-that `phpbench` leaves awkward: snapshots, saved runs, side-by-side
-comparisons, `ops/s`, richer percentiles, CI-friendly exit policies, and
-attribute-based metadata instead of docblock annotations.
+It is built around attributes, snapshots, saved runs, comparison reports,
+environment fingerprints, and CI-friendly exit codes.
 
 ## Requirements
 
@@ -27,71 +25,85 @@ composer require --dev cline/bench
 
 ## Quick Start
 
-Initialize the package in a project:
+Scaffold the default files:
 
 ```bash
 vendor/bin/bench init
 ```
 
-That scaffolds:
+That creates:
 
 - `bench.php`
 - `benchmarks/ExampleBench.php`
 
-Create a benchmark class inside `benchmarks/`.
+The generated config points `bench` at `benchmarks/` and loads
+`vendor/autoload.php` as bootstrap.
 
-```php
-<?php declare(strict_types=1);
-
-namespace App\Benchmarks;
-
-use Cline\Bench\Attributes\Assert;
-use Cline\Bench\Attributes\Bench;
-use Cline\Bench\Attributes\Competitor;
-use Cline\Bench\Attributes\Group;
-use Cline\Bench\Attributes\Iterations;
-use Cline\Bench\Attributes\Params;
-use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
-use Cline\Bench\Attributes\Scenario;
-
-#[Scenario('dto-transform')]
-#[Competitor('bench')]
-#[Group(['dto', 'comparison'])]
-final class TransformBench
-{
-    #[Bench('transform-payload')]
-    #[Iterations(5)]
-    #[Revs(10)]
-    #[Params([
-        ['size' => 'small', 'count' => 100],
-        ['size' => 'large', 'count' => 1_000],
-    ])]
-    #[Regression(metric: 'median', tolerance: '5%')]
-    #[Assert('median', '<', 5_000_000.0)]
-    public function benchTransformPayload(string $size, int $count): void
-    {
-        $items = range(1, $count);
-
-        foreach ($items as $item) {
-            strlen((string) $item.$size);
-        }
-    }
-}
-```
-
-Run the suite:
+Run your suite:
 
 ```bash
 vendor/bin/bench run
-vendor/bin/bench run --save=baseline-local
 ```
 
-## Authoring Benchmarks
+Save a baseline snapshot:
 
-### Class-Level Metadata
+```bash
+vendor/bin/bench snapshot:save baseline
+```
 
-Use class attributes to define the comparison context for a suite:
+Compare a fresh run against that snapshot:
+
+```bash
+vendor/bin/bench compare baseline
+```
+
+Fail CI if regressions exceed tolerance:
+
+```bash
+vendor/bin/bench snapshot:assert baseline
+```
+
+## Concepts
+
+### Scenario
+
+A scenario groups comparable benchmarks together. In a DTO suite, a
+scenario might be `dto-transform` or `dto-create`.
+
+### Subject
+
+A subject is the benchmark case inside a scenario, for example
+`collection-transformation` or `object-creation`.
+
+### Competitor
+
+A competitor is the implementation being measured inside the same
+scenario and subject, for example `struct`, `bag`, or `spatie`.
+
+### Parameters
+
+Parameters expand one benchmark method into multiple benchmark cases.
+Each parameter set becomes its own measured result row.
+
+### Snapshot
+
+A snapshot is a persisted baseline stored under `.bench/snapshots`. It
+contains raw samples, derived statistics, benchmark metadata, selection
+metadata, and an environment fingerprint.
+
+### Run
+
+A saved run is a persisted ad hoc execution stored under `.bench/runs`.
+Use saved runs when you want to inspect or compare a named run without
+promoting it to a baseline snapshot.
+
+## Benchmark Authoring
+
+`bench` uses PHP attributes instead of docblock annotations.
+
+### Supported Attributes
+
+Class-level attributes:
 
 - `#[Scenario('name')]`
 - `#[Competitor('name')]`
@@ -102,19 +114,75 @@ Use class attributes to define the comparison context for a suite:
 - `#[Before('method')]`
 - `#[After('method')]`
 
-### Method-Level Metadata
-
-Use method attributes to define the measured benchmark subject:
+Method-level attributes:
 
 - `#[Bench('name')]`
 - `#[Params([...])]`
 - `#[Assert(metric, operator, value)]`
 - `#[Regression(metric: 'median', tolerance: '5%')]`
 
+### Example Benchmark
+
+```php
+<?php declare(strict_types=1);
+
+namespace Benchmarks;
+
+use Cline\Bench\Attributes\Assert;
+use Cline\Bench\Attributes\Bench;
+use Cline\Bench\Attributes\Before;
+use Cline\Bench\Attributes\Competitor;
+use Cline\Bench\Attributes\Group;
+use Cline\Bench\Attributes\Iterations;
+use Cline\Bench\Attributes\Params;
+use Cline\Bench\Attributes\Regression;
+use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Scenario;
+use Cline\Bench\Attributes\Warmup;
+
+#[Scenario('dto-transform')]
+#[Competitor('struct')]
+#[Group(['dto', 'comparison'])]
+#[Iterations(5)]
+#[Revs(100)]
+#[Warmup(1)]
+#[Before('setUpPayload')]
+final class TransformBench
+{
+    private array $payload = [];
+
+    public function setUpPayload(): void
+    {
+        $this->payload = range(1, 1_000);
+    }
+
+    #[Bench('collection-transformation')]
+    #[Params([
+        ['size' => 'small'],
+        ['size' => 'large'],
+    ])]
+    #[Assert('median', '<', 5_000_000.0)]
+    #[Regression(metric: 'median', tolerance: '5%')]
+    public function benchCollectionTransformation(string $size): void
+    {
+        foreach ($this->payload as $item) {
+            strlen((string) $item.$size);
+        }
+    }
+}
+```
+
+### Benchmark Naming Rules
+
+- use one scenario for one comparison family
+- use the same subject names across competitors
+- keep competitor ids stable even if you later rename the rendered label
+- use groups for coarse selection such as `dto`, `comparison`, or `profile`
+
 ### Parameters
 
-`#[Params]` expands one benchmark method into multiple benchmark cases.
-Each element must map to the method parameters:
+`#[Params]` expands one method into multiple benchmark cases. Each entry
+must map cleanly to the method signature:
 
 ```php
 #[Params([
@@ -125,13 +193,14 @@ Each element must map to the method parameters:
 
 ### Hooks
 
-Use `#[Before]` and `#[After]` to run setup and teardown methods around
-warmup and measured iterations.
+`#[Before]` and `#[After]` run around warmup and measured iterations.
+Use them for repeatable setup and teardown, not for one-time suite
+initialization.
 
 ### Assertions
 
-Assertions let `run` fail directly in CI when a benchmark exceeds a
-limit:
+Assertions fail `bench run` when a benchmark exceeds a hard threshold.
+This is useful for CI gates on your own package:
 
 ```php
 #[Assert('median', '<', 5_000_000.0)]
@@ -139,19 +208,46 @@ limit:
 
 ### Regression Policies
 
-Regression metadata applies when the current run is compared against a
-snapshot:
+Regression metadata controls snapshot comparisons for one benchmark:
 
 ```php
 #[Regression(metric: 'median', tolerance: '5%')]
 ```
 
-If no method-level regression attribute is present, `bench` falls back to
-the global config default.
+Resolution order for regression tolerance is:
 
-## Running Benchmarks
+1. CLI override such as `--tolerance=3%`
+2. method-level `#[Regression(...)]`
+3. global config default
 
-Basic usage:
+## Commands
+
+The application exposes six commands:
+
+- `bench init`
+- `bench run`
+- `bench report`
+- `bench compare`
+- `bench snapshot:save`
+- `bench snapshot:assert`
+
+### `bench init`
+
+Scaffolds a starter config and example benchmark.
+
+```bash
+vendor/bin/bench init
+```
+
+Behavior:
+
+- creates `bench.php` if missing
+- creates `benchmarks/ExampleBench.php` if missing
+- skips existing files instead of overwriting them
+
+### `bench run`
+
+Runs benchmarks and renders results.
 
 ```bash
 vendor/bin/bench run
@@ -159,134 +255,235 @@ vendor/bin/bench run benchmarks
 vendor/bin/bench run benchmarks/MyBench.php
 ```
 
-Output formats:
+Flags:
+
+- `--format=table|md|json|csv`
+- `--save=<name>`
+- `--filter=<text>`
+- `--group=<group>` and repeated `--group=<group>`
+- `--competitor=<id>` and repeated `--competitor=<id>`
+- `--no-progress`
+
+Examples:
 
 ```bash
 vendor/bin/bench run --format=table
 vendor/bin/bench run --format=md
 vendor/bin/bench run --format=json
 vendor/bin/bench run --format=csv
-```
-
-Selection flags:
-
-```bash
-vendor/bin/bench run --filter=transform
-vendor/bin/bench run --group=comparison
-vendor/bin/bench run --competitor=struct
-vendor/bin/bench run --group=dto --competitor=struct --filter=profile
-```
-
-Live output:
-
-```bash
-vendor/bin/bench run --no-progress
-```
-
-Persistence:
-
-```bash
+vendor/bin/bench run --group=dto --competitor=struct
+vendor/bin/bench run --filter=profile --no-progress
 vendor/bin/bench run --save=pr-123
 ```
 
-`run` returns a non-zero exit code when any benchmark assertion fails.
-When `--save` is provided, the run is stored under `.bench/runs/<name>.json`
-and mirrored to `.bench/runs/latest.json`.
+Behavior:
 
-## Reporting
+- discovers benchmarks from the provided path or configured benchmark path
+- shows live progress in `table` mode unless `--no-progress` is set
+- returns a non-zero exit code when benchmark assertions fail
+- saves runs to `.bench/runs/<name>.json` and mirrors them to `latest.json`
 
-Render the current run without re-running benchmarks:
+### `bench report`
+
+Runs benchmarks and renders a report, optionally against a baseline.
 
 ```bash
 vendor/bin/bench report --format=table
-vendor/bin/bench report --format=md
-vendor/bin/bench report --format=json
-vendor/bin/bench report --format=csv
-```
-
-Render the current run against a baseline:
-
-```bash
 vendor/bin/bench report --format=md --against=baseline
 vendor/bin/bench report --format=json --against=run:latest
 ```
 
-Rendered table and Markdown reports include environment and selection
-context ahead of the result body. JSON reports include report metadata,
-environment metadata, selections, metrics, comparisons, and policy
-results.
+Flags:
 
-## Snapshots
+- `--format=table|md|json|csv`
+- `--against=<snapshot-or-run>`
+- `--filter=<text>`
+- `--group=<group>` and repeated `--group=<group>`
+- `--competitor=<id>` and repeated `--competitor=<id>`
 
-Save a named snapshot:
+Behavior:
 
-```bash
-vendor/bin/bench snapshot:save baseline
-vendor/bin/bench snapshot:save baseline --competitor=struct
-```
+- without `--against`, renders the current run only
+- with `--against`, renders a comparison report
+- if `--against` is omitted and `bench.php` defines scenario baselines,
+  `report` resolves those baselines automatically
 
-Snapshots are stored in `.bench/snapshots` by default and include:
+### `bench compare`
 
-- raw samples
-- derived statistics
-- benchmark metadata
-- environment fingerprint
-
-Assert regressions:
+Runs benchmarks and compares the current run against a saved baseline.
 
 ```bash
-vendor/bin/bench snapshot:assert --against=baseline
-vendor/bin/bench snapshot:assert baseline --tolerance=3%
-vendor/bin/bench snapshot:assert baseline --competitor=struct
-```
-
-Tolerance resolution order:
-
-1. `#[Regression(...)]` on the benchmark method
-2. configured default regression policy
-3. CLI override when provided
-
-## Comparisons
-
-Compare the current run against a saved baseline or run:
-
-```bash
-vendor/bin/bench compare --against=baseline
 vendor/bin/bench compare baseline
+vendor/bin/bench compare --against=baseline
 vendor/bin/bench compare snapshot:latest
 vendor/bin/bench compare run:latest
-vendor/bin/bench compare baseline --format=md
-vendor/bin/bench compare baseline --format=csv
 ```
 
-Comparison output includes:
+Flags:
 
-- side-by-side medians
-- winner
-- ratio
-- percent faster
-- per-competitor `ops/s`
-- significance label
+- `--against=<snapshot-or-run>`
+- `--format=table|md|json|csv`
+- `--filter=<text>`
+- `--group=<group>` and repeated `--group=<group>`
+- `--competitor=<id>` and repeated `--competitor=<id>`
+- `--fail-on-winner-change`
+- `--min-ratio=<float>`
 
-### Compare Exit Policies
-
-Use comparison policies to fail CI when the comparison quality changes in
-meaningful ways:
+Examples:
 
 ```bash
+vendor/bin/bench compare baseline --format=md
 vendor/bin/bench compare baseline --fail-on-winner-change
 vendor/bin/bench compare baseline --min-ratio=2
 vendor/bin/bench compare baseline --fail-on-winner-change --min-ratio=2
 ```
 
-Supported policies:
+Behavior:
 
-- `--fail-on-winner-change`
-- `--min-ratio=<float>`
+- accepts a positional baseline name or `--against`
+- resolves snapshots with `snapshot:<name>` and runs with `run:<name>`
+- if no explicit baseline is provided, scenario baselines from `bench.php`
+  may satisfy the comparison
+- returns a non-zero exit code when compare policies fail
 
-## Configuration
+### `bench snapshot:save`
 
-Optional configuration lives in `bench.php` at the project root.
+Runs benchmarks and stores a named snapshot.
+
+```bash
+vendor/bin/bench snapshot:save baseline
+vendor/bin/bench snapshot:save baseline benchmarks
+vendor/bin/bench snapshot:save baseline --competitor=struct
+```
+
+Flags:
+
+- `--filter=<text>`
+- `--group=<group>` and repeated `--group=<group>`
+- `--competitor=<id>` and repeated `--competitor=<id>`
+
+Behavior:
+
+- writes `.bench/snapshots/<name>.json`
+- updates `.bench/snapshots/latest.json`
+- captures environment fingerprint, selection, settings, raw samples, and
+  derived statistics
+
+### `bench snapshot:assert`
+
+Runs benchmarks and fails when regressions exceed allowed tolerance.
+
+```bash
+vendor/bin/bench snapshot:assert baseline
+vendor/bin/bench snapshot:assert --against=baseline
+vendor/bin/bench snapshot:assert baseline --tolerance=3%
+```
+
+Flags:
+
+- `--against=<snapshot>`
+- `--tolerance=<percent>`
+- `--filter=<text>`
+- `--group=<group>` and repeated `--group=<group>`
+- `--competitor=<id>` and repeated `--competitor=<id>`
+
+Behavior:
+
+- accepts a positional baseline name or `--against`
+- can resolve scenario baselines from config when no explicit baseline is
+  provided
+- prints one regression decision per benchmark
+- returns a non-zero exit code when any benchmark exceeds tolerance
+
+## Baseline References
+
+Anywhere a baseline is accepted, you can use:
+
+- `baseline`
+- `snapshot:baseline`
+- `snapshot:latest`
+- `run:latest`
+- `run:pr-123`
+
+If no prefix is given, `bench` resolves the name as a snapshot first.
+
+## Selection Flags
+
+The same selection model is shared across `run`, `report`, `compare`,
+`snapshot:save`, and `snapshot:assert`.
+
+- `--filter=<text>` matches scenario, subject, competitor, and groups
+- `--group=<name>` narrows to one or more benchmark groups
+- `--competitor=<id>` narrows to one or more competitors
+
+Examples:
+
+```bash
+vendor/bin/bench run --filter=transform
+vendor/bin/bench run --group=comparison
+vendor/bin/bench run --competitor=struct
+vendor/bin/bench compare baseline --group=dto --competitor=spatie
+```
+
+## Output Formats
+
+### Table
+
+Table output is the default and is optimized for terminal use.
+
+When a suite contains multiple competitors under the same scenario,
+`bench` renders comparison-first tables with:
+
+- side-by-side durations per competitor
+- winner
+- closest gap or slowest gap, depending on config
+- closest gain percentage or slowest gain percentage
+- per-competitor `ops/s`
+- overall wins and geometric mean spread
+
+### Markdown
+
+Markdown output is suitable for pull requests, comments, and artifacts.
+It includes the same comparison information as the table format, plus
+environment and selection context.
+
+### JSON
+
+JSON output is intended for tooling and automation. It includes:
+
+- report metadata
+- environment metadata
+- execution settings
+- benchmark selection metadata
+- raw samples
+- derived statistics
+- comparison rows
+- compare policy results when relevant
+
+### CSV
+
+CSV output is intended for spreadsheet import or downstream aggregation.
+
+## Reading Comparison Output
+
+For multi-competitor suites, the comparison summary focuses on the
+fastest competitor in each row.
+
+Key fields:
+
+- `Winner`: fastest competitor for that benchmark row
+- `Closest Gap`: fastest competitor versus the next-fastest competitor
+- `Closest Gain`: percentage lead of the fastest competitor over the
+  next-fastest competitor
+- per-competitor `Ops/s`: throughput for each displayed competitor
+
+If `withComparisonReference('slowest')` is configured, the summary gap
+and gain columns are computed against the slowest competitor instead of
+the closest competitor.
+
+## `bench.php` Configuration
+
+Configuration is optional and lives at the project root as `bench.php`.
 
 ```php
 <?php declare(strict_types=1);
@@ -298,16 +495,17 @@ return BenchConfig::default()
     ->withBenchmarkPath('benchmarks')
     ->withSnapshotPath('.bench/snapshots')
     ->withRunPath('.bench/runs')
-    ->withBootstrapPath('bench-bootstrap.php')
+    ->withBootstrapPath('vendor/autoload.php')
     ->withDefaultIterations(5)
     ->withDefaultRevolutions(1)
     ->withDefaultWarmupIterations(0)
-    ->withCalibrationBudgetNanoseconds(5_000_000)
+    ->withCalibrationBudgetNanoseconds(0)
     ->withProcessIsolation(false)
     ->withDefaultRegression(metric: 'median', tolerance: '5%')
     ->withDefaultReportFormat('table')
     ->withProgressMetric('median')
     ->withProgressTimeUnit('μs')
+    ->withComparisonReference('closest')
     ->withPreferredCompetitors(['struct', 'base'])
     ->withCompetitorAliases([
         'struct' => 'Baloo',
@@ -317,55 +515,168 @@ return BenchConfig::default()
         'baloo-data' => 'snapshot:data-baseline',
         'baloo-profile' => 'snapshot:profile-baseline',
     ])
+    ->withNumberSeparators(decimalSeparator: '.', thousandsSeparator: ',')
+    ->withRawNumberDecimals(3)
+    ->withDurationDecimals(3)
+    ->withOperationsDecimals(0)
+    ->withProgressDecimals(timeDecimals: 3, operationsDecimals: 3)
+    ->withRatioDecimals(2)
+    ->withPercentageDecimals(1, 2)
     ->withCompatibilityMode(CompatibilityMode::Warn);
 ```
 
-### What Each Config Controls
+### Defaults
 
-- `withBenchmarkPath()` sets the discovery root used by `run`
+Current defaults:
+
+- benchmark path: `benchmarks`
+- snapshot path: `.bench/snapshots`
+- run path: `.bench/runs`
+- preferred competitors: `['struct', 'base']`
+- bootstrap path: `null`
+- default iterations: `5`
+- default revolutions: `1`
+- default warmup iterations: `0`
+- calibration budget: `0`
+- process isolation: `false`
+- default regression: `median`, `5%`
+- default report format: `table`
+- progress metric: `median`
+- progress time unit: `μs`
+- comparison reference: `closest`
+- decimal separator: `.`
+- thousands separator: `,`
+- raw number decimals: `3`
+- duration decimals: `3`
+- operations decimals: `0`
+- progress time decimals: `3`
+- progress operations decimals: `3`
+- ratio decimals: `2`
+- percentage decimals: `1`
+- delta percentage decimals: `2`
+- compatibility mode: `warn`
+
+### Path and Bootstrap Controls
+
+- `withBenchmarkPath()` sets the default discovery path
 - `withSnapshotPath()` changes where snapshots are stored
 - `withRunPath()` changes where saved runs are stored
-- `withBootstrapPath()` loads a bootstrap file before discovery/execution
+- `withBootstrapPath()` requires a file before discovery and execution
+
+Typical bootstrap use:
+
+```php
+return BenchConfig::default()
+    ->withBootstrapPath('vendor/autoload.php');
+```
+
+### Execution Controls
+
 - `withDefaultIterations()` sets fallback iterations
 - `withDefaultRevolutions()` sets fallback revs
 - `withDefaultWarmupIterations()` sets fallback warmup iterations
-- `withCalibrationBudgetNanoseconds()` sets the minimum calibration budget
-- `withProcessIsolation()` forces benchmark sampling through child processes
-- `withDefaultRegression()` sets the suite-wide regression policy
-- `withDefaultReportFormat()` changes the default render format
-- `withProgressMetric()` selects the live run metric label, for example `median` or `average`
-- `withProgressTimeUnit()` changes the live run time unit, for example `ns`, `μs`, `ms`, or `s`
-- `withPreferredCompetitors()` orders comparison columns
-- `withCompetitorAliases()` maps internal competitor ids to display labels
-- `withScenarioBaselines()` pins specific scenarios to specific snapshots or runs
-- `withCompatibilityMode()` controls environment mismatch behavior
+- `withCalibrationBudgetNanoseconds()` raises revs until a minimum
+  measurement budget is reached
+- `withProcessIsolation()` runs each measured sample in a child process
 
-### Preferred Competitors
+Example:
 
-`withPreferredCompetitors()` controls comparison ordering. Competitors
-listed there appear first in the order provided. Any remaining
-competitors are rendered alphabetically afterward.
+```php
+return BenchConfig::default()
+    ->withDefaultIterations(10)
+    ->withDefaultRevolutions(100)
+    ->withDefaultWarmupIterations(2)
+    ->withCalibrationBudgetNanoseconds(5_000_000)
+    ->withProcessIsolation(true);
+```
 
-### Competitor Aliases
+### Regression Controls
 
-`withCompetitorAliases()` lets you keep internal benchmark ids stable
-while rendering human-friendly labels in table and Markdown output.
+- `withDefaultRegression(metric: 'median', tolerance: '5%')`
+
+Use this when you want a project-wide fallback for snapshot assertions.
+
+### Output and Formatting Controls
+
+- `withDefaultReportFormat('table'|'md'|'json'|'csv')`
+- `withProgressMetric('median'|'average'|'mean')`
+- `withProgressTimeUnit('ns'|'μs'|'ms'|'s')`
+- `withComparisonReference('closest'|'slowest')`
+
+`withComparisonReference()` controls what the summary gap columns mean:
+
+- `closest`: compare the winner against the next-fastest competitor
+- `slowest`: compare the winner against the slowest competitor
+
+### Competitor Ordering and Labels
+
+- `withPreferredCompetitors()` brings listed competitors to the front in
+  the exact order provided
+- any remaining competitors are ordered alphabetically
+- `withCompetitorAliases()` maps internal ids to rendered labels
+
+Example:
+
+```php
+return BenchConfig::default()
+    ->withPreferredCompetitors(['struct', 'bag', 'spatie'])
+    ->withCompetitorAliases([
+        'struct' => 'Baloo',
+        'spatie' => 'Spatie Data',
+    ]);
+```
 
 ### Scenario Baselines
 
-`withScenarioBaselines()` pins a scenario to a specific snapshot or run.
-When configured, `compare`, `report`, and `snapshot:assert` can resolve
-baselines without an explicit `--against` argument.
+`withScenarioBaselines()` maps scenario ids to snapshot or run
+references:
 
-## Environment Compatibility
+```php
+return BenchConfig::default()
+    ->withScenarioBaselines([
+        'dto-transform' => 'snapshot:transform-baseline',
+        'dto-create' => 'run:pr-123',
+    ]);
+```
 
-Compatibility modes:
+This allows `report`, `compare`, and `snapshot:assert` to resolve
+baselines without an explicit `--against`.
+
+### Number Formatting
+
+Use these methods to control separators and precision:
+
+- `withNumberSeparators(decimalSeparator: '.', thousandsSeparator: ',')`
+- `withRawNumberDecimals(int)`
+- `withDurationDecimals(int)`
+- `withOperationsDecimals(int)`
+- `withProgressDecimals(timeDecimals: int, operationsDecimals: ?int = null)`
+- `withRatioDecimals(int)`
+- `withPercentageDecimals(int, ?int = null)`
+
+Example for German-style formatting:
+
+```php
+return BenchConfig::default()
+    ->withNumberSeparators(decimalSeparator: ',', thousandsSeparator: '.')
+    ->withDurationDecimals(0)
+    ->withOperationsDecimals(0)
+    ->withProgressDecimals(timeDecimals: 0, operationsDecimals: 0)
+    ->withRatioDecimals(2)
+    ->withPercentageDecimals(2);
+```
+
+### Environment Compatibility
+
+`bench` records environment fingerprints in snapshots and saved runs.
+
+Supported compatibility modes:
 
 - `CompatibilityMode::Ignore`
 - `CompatibilityMode::Warn`
 - `CompatibilityMode::Fail`
 
-Environment fingerprints currently capture:
+Environment fingerprints currently include:
 
 - PHP version
 - PHP SAPI
@@ -373,16 +684,41 @@ Environment fingerprints currently capture:
 - architecture
 - loaded extensions
 
+If a baseline environment differs from the current one:
+
+- `Ignore`: continue silently
+- `Warn`: print the mismatch and continue
+- `Fail`: print the mismatch and exit non-zero
+
+## Storage Layout
+
+Default storage paths:
+
+- snapshots: `.bench/snapshots`
+- runs: `.bench/runs`
+
+Both snapshots and runs keep a `latest.json` alias in addition to named
+files.
+
 ## Execution Model
 
-- warmup, revs, and iterations can be declared per benchmark or via config
-- calibration can scale revs upward to hit a minimum measurement budget
-- optional process isolation executes each sample in a fresh PHP child process
-- saved snapshots and runs maintain a `latest` alias
+The runtime model is:
+
+- discover benchmark classes from the configured path
+- expand parameter sets into concrete benchmark cases
+- apply class and method metadata
+- optionally warm up the case
+- optionally calibrate revs upward to hit the configured budget
+- run each measured iteration
+- optionally isolate each sample in a fresh child process
+- compute derived statistics from raw samples
+
+`bench` creates a fresh benchmark instance for each warmup and measured
+iteration.
 
 ## Reported Metrics
 
-Each benchmark result includes:
+Each benchmark result records:
 
 - sample count
 - min
@@ -396,7 +732,33 @@ Each benchmark result includes:
 - `p99`
 - `ops/s`
 
-## Current Scope
+## CI Patterns
+
+Save a baseline locally or on a scheduled job:
+
+```bash
+vendor/bin/bench snapshot:save baseline
+```
+
+Fail CI when regressions exceed tolerance:
+
+```bash
+vendor/bin/bench snapshot:assert baseline --tolerance=5%
+```
+
+Fail CI when comparison quality changes:
+
+```bash
+vendor/bin/bench compare baseline --fail-on-winner-change --min-ratio=2
+```
+
+Render a PR-friendly comparison artifact:
+
+```bash
+vendor/bin/bench report --format=md --against=baseline
+```
+
+## Scope
 
 Implemented now:
 
@@ -404,14 +766,16 @@ Implemented now:
 - grouped and parameterized benchmarks
 - snapshots, saved runs, and `latest` aliases
 - regression assertions
-- comparison tables and compare exit policies
+- comparison-first terminal and Markdown reports
+- compare exit policies
 - calibrated revolutions and optional process isolation
 - environment compatibility checks
 - JSON, Markdown, table, and CSV reports
 - selector flags for groups, competitors, and text filters
 - `bench init` starter scaffolding
+- configurable comparison ordering, aliases, and number formatting
 
-Not implemented yet:
+Not implemented:
 
 - profiler or flamegraph integration
 - remote result storage
