@@ -19,3 +19,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   optional `_case` names for stable snapshots and named cases
 - Compare policies now enforce the configured reference gap, and the
   public threshold flag is `--min-reference-gap`
+- `USAGE.md` now documents the enum-based public API instead of the old
+  string-based examples

@@ -119,7 +119,7 @@ Method-level attributes:
 - `#[Bench('name')]`
 - `#[Params([...])]`
 - `#[Assert(metric, operator, value)]`
-- `#[Regression(metric: 'median', tolerance: '5%')]`
+- `#[Regression(metric: Metric::Median, tolerance: '5%')]`
 
 ### Example Benchmark
 
@@ -139,6 +139,8 @@ use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
+use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\Metric;
 
 #[Scenario('dto-transform')]
 #[Competitor('struct')]
@@ -161,8 +163,8 @@ final class TransformBench
         ['size' => 'small'],
         ['size' => 'large'],
     ])]
-    #[Assert('median', '<', 5_000_000.0)]
-    #[Regression(metric: 'median', tolerance: '5%')]
+    #[Assert(Metric::Median, AssertionOperator::LessThan, 5_000_000.0)]
+    #[Regression(metric: Metric::Median, tolerance: '5%')]
     public function benchCollectionTransformation(string $size): void
     {
         foreach ($this->payload as $item) {
@@ -203,7 +205,7 @@ Assertions fail `bench run` when a benchmark exceeds a hard threshold.
 This is useful for CI gates on your own package:
 
 ```php
-#[Assert('median', '<', 5_000_000.0)]
+#[Assert(Metric::Median, AssertionOperator::LessThan, 5_000_000.0)]
 ```
 
 ### Regression Policies
@@ -211,7 +213,7 @@ This is useful for CI gates on your own package:
 Regression metadata controls snapshot comparisons for one benchmark:
 
 ```php
-#[Regression(metric: 'median', tolerance: '5%')]
+#[Regression(metric: Metric::Median, tolerance: '5%')]
 ```
 
 Resolution order for regression tolerance is:
@@ -477,7 +479,7 @@ Key fields:
   next-fastest competitor
 - per-competitor `Ops/s`: throughput for each displayed competitor
 
-If `withComparisonReference('slowest')` is configured, the summary gap
+If `withComparisonReference(ComparisonReference::Slowest)` is configured, the summary gap
 and gain columns are computed against the slowest competitor instead of
 the closest competitor. Compare policies use that same configured
 reference, so `--min-reference-gap` always enforces the same gap that
@@ -491,6 +493,10 @@ Configuration is optional and lives at the project root as `bench.php`.
 <?php declare(strict_types=1);
 
 use Cline\Bench\Configuration\BenchConfig;
+use Cline\Bench\Enums\ComparisonReference;
+use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ReportFormat;
+use Cline\Bench\Enums\TimeUnit;
 use Cline\Bench\Environment\CompatibilityMode;
 
 return BenchConfig::default()
@@ -503,11 +509,11 @@ return BenchConfig::default()
     ->withDefaultWarmupIterations(0)
     ->withCalibrationBudgetNanoseconds(0)
     ->withProcessIsolation(false)
-    ->withDefaultRegression(metric: 'median', tolerance: '5%')
-    ->withDefaultReportFormat('table')
-    ->withProgressMetric('median')
-    ->withProgressTimeUnit('μs')
-    ->withComparisonReference('closest')
+    ->withDefaultRegression(metric: Metric::Median, tolerance: '5%')
+    ->withDefaultReportFormat(ReportFormat::Table)
+    ->withProgressMetric(Metric::Median)
+    ->withProgressTimeUnit(TimeUnit::Microseconds)
+    ->withComparisonReference(ComparisonReference::Closest)
     ->withPreferredCompetitors(['struct', 'base'])
     ->withCompetitorAliases([
         'struct' => 'Baloo',
@@ -594,16 +600,16 @@ return BenchConfig::default()
 
 ### Regression Controls
 
-- `withDefaultRegression(metric: 'median', tolerance: '5%')`
+- `withDefaultRegression(metric: Metric::Median, tolerance: '5%')`
 
 Use this when you want a project-wide fallback for snapshot assertions.
 
 ### Output and Formatting Controls
 
-- `withDefaultReportFormat('table'|'md'|'json'|'csv')`
-- `withProgressMetric('median'|'average'|'mean')`
-- `withProgressTimeUnit('ns'|'μs'|'ms'|'s')`
-- `withComparisonReference('closest'|'slowest')`
+- `withDefaultReportFormat(ReportFormat::...)`
+- `withProgressMetric(Metric::Median|Metric::Mean)`
+- `withProgressTimeUnit(TimeUnit::Nanoseconds|Microseconds|Milliseconds|Seconds)`
+- `withComparisonReference(ComparisonReference::Closest|Slowest)`
 
 `withComparisonReference()` controls what the summary gap columns mean:
 
