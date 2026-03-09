@@ -43,3 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `USAGE.md` now documents reference terminology and the versioned JSON
   schema contract, and the installed-package test suite now covers
   `vendor/bin/bench run`
+- Scenario-specific configured baselines are now named scenario
+  references, comparison/report metadata now uses `reference` fields,
+  and the last legacy `assertions` snapshot fallback has been removed
+- JSON schema documentation now lives in `docs/json-schema.md`, and
+  report/compare command output configuration is now shared through a
+  single console concern instead of being duplicated across commands

@@ -11,15 +11,15 @@ namespace Cline\Bench\Console\Commands;
 
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
+use Cline\Bench\Console\Concerns\ConfiguresReportOutput;
 use Cline\Bench\Console\Concerns\FormatsResults;
-use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Environment\EnvironmentFingerprint;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
 use Cline\Bench\Execution\BenchmarkSelection;
 use Cline\Bench\Snapshot\Snapshot;
-use Cline\Bench\Storage\BaselineResolver;
-use Cline\Bench\Storage\ScenarioBaselineResolver;
+use Cline\Bench\Storage\ReferenceResolver;
+use Cline\Bench\Storage\ScenarioReferenceResolver;
 use InvalidArgumentException;
 use Override;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -47,40 +47,26 @@ use function throw_unless;
 /**
  * @author Brian Faust <brian@cline.sh>
  */
-#[AsCommand(name: 'report', description: 'Render benchmark reports with optional snapshot comparison.')]
+#[AsCommand(name: 'report', description: 'Render benchmark reports with optional reference comparison.')]
 final class ReportCommand extends Command
 {
     use FormatsResults;
-
-    /** @var list<string> */
-    private array $preferredCompetitors = ['struct', 'base'];
-
-    /** @var array<string, string> */
-    private array $competitorAliases = [];
-
-    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
-
-    private string $decimalSeparator = '.';
-
-    private string $thousandsSeparator = ',';
-
-    private int $rawNumberDecimals = 3;
-
-    private int $durationDecimals = 3;
-
-    private int $operationsDecimals = 0;
-
-    private int $ratioDecimals = 2;
-
-    private int $percentageDecimals = 1;
-
-    private int $deltaPercentageDecimals = 2;
-
-    private bool $significanceEnabled = true;
-
-    private float $significanceAlpha = 0.05;
-
-    private int $significanceMinimumSamples = 2;
+    use ConfiguresReportOutput {
+        ConfiguresReportOutput::preferredCompetitors insteadof FormatsResults;
+        ConfiguresReportOutput::competitorAliases insteadof FormatsResults;
+        ConfiguresReportOutput::comparisonReference insteadof FormatsResults;
+        ConfiguresReportOutput::decimalSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::thousandsSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::rawNumberDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::durationDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::operationsDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::ratioDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::percentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::deltaPercentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::significanceEnabled insteadof FormatsResults;
+        ConfiguresReportOutput::significanceAlpha insteadof FormatsResults;
+        ConfiguresReportOutput::significanceMinimumSamples insteadof FormatsResults;
+    }
 
     #[Override()]
     protected function configure(): void
@@ -99,23 +85,10 @@ final class ReportCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $comparison = $config->comparison();
         $reporting = $config->reporting();
         $storage = $config->storage();
-        $this->preferredCompetitors = $comparison->preferredCompetitors;
-        $this->competitorAliases = $comparison->competitorAliases;
-        $this->comparisonReference = $comparison->comparisonReference;
-        $this->decimalSeparator = $reporting->decimalSeparator;
-        $this->thousandsSeparator = $reporting->thousandsSeparator;
-        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
-        $this->durationDecimals = $reporting->durationDecimals;
-        $this->operationsDecimals = $reporting->operationsDecimals;
-        $this->ratioDecimals = $reporting->ratioDecimals;
-        $this->percentageDecimals = $reporting->percentageDecimals;
-        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
-        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $comparison->significanceAlpha;
-        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
+        $comparison = $config->comparison();
+        $this->initializeReportOutput($config, $this->flag($input, 'no-significance'));
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $results = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
@@ -123,7 +96,7 @@ final class ReportCommand extends Command
         $format = $this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value;
         $metadata = $this->reportMetadata('report', $config, $selection);
 
-        if ($against === null && $comparison->scenarioBaselines === []) {
+        if ($against === null && $comparison->scenarioReferences === []) {
             $output->writeln(match ($format) {
                 'json' => $this->asJson($results, $metadata),
                 'csv' => $this->asCsv($results),
@@ -134,16 +107,16 @@ final class ReportCommand extends Command
             return self::SUCCESS;
         }
 
-        $snapshot = $this->resolveBaseline(
+        $snapshot = $this->resolveReference(
             against: $against,
             config: $config,
             results: $results,
-            resolver: new BaselineResolver(
+            resolver: new ReferenceResolver(
                 $this->resolvePath($storage->snapshotPath),
                 $this->resolvePath($storage->runPath),
             ),
         );
-        $baselineName = $against ?? $snapshot->name;
+        $referenceName = $against ?? $snapshot->name;
 
         $output->writeln(match ($format) {
             'json' => $this->asComparisonJson($results, $snapshot->results, [
@@ -152,19 +125,19 @@ final class ReportCommand extends Command
                 'generated_at' => gmdate(DATE_ATOM),
                 'selection' => $selection->toArray(),
                 'current' => $metadata,
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $baselineName,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $referenceName,
             ]),
             'csv' => $this->asComparisonCsv($results, $snapshot->results),
             'md' => $this->asComparisonMarkdown($results, $snapshot->results, [
                 'current' => $metadata,
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $baselineName,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $referenceName,
             ]),
             default => $this->asComparisonTable($results, $snapshot->results, [
                 'current' => $metadata,
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $baselineName,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $referenceName,
             ]),
         });
 
@@ -172,96 +145,20 @@ final class ReportCommand extends Command
     }
 
     /**
-     * @return list<string>
-     */
-    protected function preferredCompetitors(): array
-    {
-        return $this->preferredCompetitors;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function competitorAliases(): array
-    {
-        return $this->competitorAliases;
-    }
-
-    protected function comparisonReference(): ComparisonReference
-    {
-        return $this->comparisonReference;
-    }
-
-    protected function decimalSeparator(): string
-    {
-        return $this->decimalSeparator;
-    }
-
-    protected function thousandsSeparator(): string
-    {
-        return $this->thousandsSeparator;
-    }
-
-    protected function rawNumberDecimals(): int
-    {
-        return $this->rawNumberDecimals;
-    }
-
-    protected function durationDecimals(): int
-    {
-        return $this->durationDecimals;
-    }
-
-    protected function operationsDecimals(): int
-    {
-        return $this->operationsDecimals;
-    }
-
-    protected function ratioDecimals(): int
-    {
-        return $this->ratioDecimals;
-    }
-
-    protected function percentageDecimals(): int
-    {
-        return $this->percentageDecimals;
-    }
-
-    protected function deltaPercentageDecimals(): int
-    {
-        return $this->deltaPercentageDecimals;
-    }
-
-    protected function significanceEnabled(): bool
-    {
-        return $this->significanceEnabled;
-    }
-
-    protected function significanceAlpha(): float
-    {
-        return $this->significanceAlpha;
-    }
-
-    protected function significanceMinimumSamples(): int
-    {
-        return $this->significanceMinimumSamples;
-    }
-
-    /**
      * @param list<BenchmarkResult> $results
      */
-    private function resolveBaseline(?string $against, BenchConfig $config, array $results, BaselineResolver $resolver): Snapshot
+    private function resolveReference(?string $against, BenchConfig $config, array $results, ReferenceResolver $resolver): Snapshot
     {
         if ($against !== null) {
             return $resolver->resolve($against);
         }
 
-        return new ScenarioBaselineResolver($resolver)->resolve(
+        return new ScenarioReferenceResolver($resolver)->resolve(
             scenarios: array_values(array_unique(array_map(
                 static fn (BenchmarkResult $result): string => $result->scenario,
                 $results,
             ))),
-            scenarioBaselines: $config->scenarioBaselines,
+            scenarioReferences: $config->scenarioReferences,
         );
     }
 
@@ -338,9 +235,9 @@ final class ReportCommand extends Command
                 'default_iterations' => $config->defaultIterations,
                 'default_revolutions' => $config->defaultRevolutions,
                 'default_warmup_iterations' => $config->defaultWarmupIterations,
-                'significance_enabled' => $this->significanceEnabled,
-                'significance_alpha' => $this->significanceAlpha,
-                'significance_minimum_samples' => $this->significanceMinimumSamples,
+                'significance_enabled' => $this->significanceEnabled(),
+                'significance_alpha' => $this->significanceAlpha(),
+                'significance_minimum_samples' => $this->significanceMinimumSamples(),
             ],
         ];
     }

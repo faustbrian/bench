@@ -10,8 +10,8 @@
 namespace Cline\Bench\Execution;
 
 use Cline\Bench\Configuration\BenchConfig;
-use Cline\Bench\Discovery\BenchmarkThreshold;
 use Cline\Bench\Discovery\BenchmarkDiscovery;
+use Cline\Bench\Discovery\BenchmarkThreshold;
 use Cline\Bench\Discovery\DiscoveredBenchmark;
 use Cline\Bench\Enums\Metric;
 use Cline\Bench\Enums\ThresholdOperator;

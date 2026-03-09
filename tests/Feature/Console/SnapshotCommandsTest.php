@@ -41,7 +41,7 @@ describe('snapshot commands', function (): void {
                 'against' => 'snapshot:latest',
                 'path' => $fixturePath,
             ]))->toBe(0)
-                ->and($compareTester->getDisplay())->toContain('Baseline')
+                ->and($compareTester->getDisplay())->toContain('Reference')
                 ->and($compareTester->getDisplay())->toContain('Delta %')
                 ->and($compareTester->getDisplay())->toContain('Winner')
                 ->and($compareTester->getDisplay())->toContain('Significance');
@@ -160,7 +160,7 @@ PHP);
                 'against' => 'run:latest',
                 'path' => $fixturePath,
             ]))->toBe(0)
-                ->and($compareTester->getDisplay())->toContain('Baseline');
+                ->and($compareTester->getDisplay())->toContain('Reference');
 
             expect($reportTester->execute([
                 'command' => 'report',
@@ -169,7 +169,7 @@ PHP);
                 '--format' => 'json',
             ]))->toBe(0)
                 ->and($reportTester->getDisplay())->toContain('"comparisons"')
-                ->and($reportTester->getDisplay())->toContain('"baseline"')
+                ->and($reportTester->getDisplay())->toContain('"reference"')
                 ->and($reportTester->getDisplay())->toContain('"metadata"')
                 ->and($reportTester->getDisplay())->toContain('"schema_version"')
                 ->and($reportTester->getDisplay())->toContain('"report_type"');
@@ -230,7 +230,7 @@ PHP);
         }
     });
 
-    it('uses configured scenario baselines when no explicit against reference is provided', function (): void {
+    it('uses configured scenario references when no explicit against reference is provided', function (): void {
         $workingDirectory = sys_get_temp_dir().'/bench-pinned-baselines-'.bin2hex(random_bytes(8));
         mkdir($workingDirectory, 0o755, true);
         $previousDirectory = getcwd();
@@ -241,7 +241,7 @@ PHP);
 use Cline\Bench\Configuration\BenchConfig;
 
 return BenchConfig::default()
-    ->withScenarioBaselines([
+    ->withScenarioReferences([
         'dto-transform' => 'transform-baseline',
     ]);
 PHP);
@@ -270,7 +270,7 @@ PHP);
                 '--competitor' => ['bench'],
                 '--format' => 'json',
             ]))->toBe(0)
-                ->and($compareTester->getDisplay())->toContain('"baseline_name": "pinned"');
+                ->and($compareTester->getDisplay())->toContain('"reference_name": "pinned"');
 
             expect($reportTester->execute([
                 'command' => 'report',
@@ -279,7 +279,7 @@ PHP);
                 '--format' => 'md',
             ]))->toBe(0)
                 ->and($reportTester->getDisplay())->toContain('## Environment')
-                ->and($reportTester->getDisplay())->toContain('- Baseline: `pinned`');
+                ->and($reportTester->getDisplay())->toContain('- Reference: `pinned`');
 
             expect($assertTester->execute([
                 'command' => 'snapshot:assert',

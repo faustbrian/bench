@@ -476,6 +476,9 @@ JSON output is intended for tooling and automation. It includes:
 JSON is a versioned public contract. Consumers should branch on
 `schema_version` and treat unknown fields as additive.
 
+The dedicated schema reference lives in
+[`docs/json-schema.md`](docs/json-schema.md).
+
 Current guarantees for `schema_version: 1`:
 
 - `report_type` distinguishes `run`, `comparison`, and `snapshot`
@@ -552,7 +555,7 @@ return BenchConfig::default()
         'struct' => 'Baloo',
         'spatie' => 'Spatie Data',
     ])
-    ->withScenarioBaselines([
+    ->withScenarioReferences([
         'baloo-data' => 'snapshot:data-baseline',
         'baloo-profile' => 'snapshot:profile-baseline',
     ])
@@ -692,21 +695,21 @@ return BenchConfig::default()
     ]);
 ```
 
-### Scenario Baselines
+### Scenario References
 
-`withScenarioBaselines()` maps scenario ids to snapshot or run
+`withScenarioReferences()` maps scenario ids to snapshot or run
 references:
 
 ```php
 return BenchConfig::default()
-    ->withScenarioBaselines([
+    ->withScenarioReferences([
         'dto-transform' => 'snapshot:transform-baseline',
         'dto-create' => 'run:pr-123',
     ]);
 ```
 
 This allows `report`, `compare`, and `snapshot:assert` to resolve
-baselines without an explicit `--against`.
+references without an explicit `--against`.
 
 ### Number Formatting
 

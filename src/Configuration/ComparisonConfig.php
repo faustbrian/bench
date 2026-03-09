@@ -20,12 +20,12 @@ final readonly class ComparisonConfig
     /**
      * @param list<string>          $preferredCompetitors
      * @param array<string, string> $competitorAliases
-     * @param array<string, string> $scenarioBaselines
+     * @param array<string, string> $scenarioReferences
      */
     public function __construct(
         public array $preferredCompetitors,
         public array $competitorAliases,
-        public array $scenarioBaselines,
+        public array $scenarioReferences,
         public ComparisonReference $comparisonReference,
         public bool $significanceEnabled,
         public float $significanceAlpha,

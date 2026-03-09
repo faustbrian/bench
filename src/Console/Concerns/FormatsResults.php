@@ -54,13 +54,13 @@ use function strcmp;
 use function usort;
 
 /**
- * @phpstan-type BaselineComparisonRow array{
+ * @phpstan-type ReferenceComparisonRow array{
  *     scenario: string,
  *     subject: string,
  *     competitor: string,
  *     parameter_label: string,
  *     current_median: float,
- *     baseline_median: float,
+ *     reference_median: float,
  *     delta_percentage: float,
  *     winner: string,
  *     reference_gap: float,
@@ -263,21 +263,21 @@ trait FormatsResults
 
     /**
      * @param list<BenchmarkResult> $results
-     * @param list<BenchmarkResult> $baseline
+     * @param list<BenchmarkResult> $reference
      * @param array<string, mixed>  $metadata
      */
-    private function asComparisonJson(array $results, array $baseline, array $metadata = []): string
+    private function asComparisonJson(array $results, array $reference, array $metadata = []): string
     {
         return json_encode([
             'results' => array_map(
                 static fn (BenchmarkResult $result): array => $result->toArray(),
                 $results,
             ),
-            'comparisons' => $this->comparisonRowsAgainstBaseline($results, $baseline),
-            'baseline' => [
+            'comparisons' => $this->comparisonRowsAgainstReference($results, $reference),
+            'reference' => [
                 'results' => array_map(
                     static fn (BenchmarkResult $result): array => $result->toArray(),
-                    $baseline,
+                    $reference,
                 ),
             ],
             'metadata' => $metadata,
@@ -286,9 +286,9 @@ trait FormatsResults
 
     /**
      * @param list<BenchmarkResult> $results
-     * @param list<BenchmarkResult> $baseline
+     * @param list<BenchmarkResult> $reference
      */
-    private function asComparisonCsv(array $results, array $baseline): string
+    private function asComparisonCsv(array $results, array $reference): string
     {
         $rows = [[
             'scenario',
@@ -296,7 +296,7 @@ trait FormatsResults
             'competitor',
             'parameter_label',
             'current_median',
-            'baseline_median',
+            'reference_median',
             'delta_percentage',
             'winner',
             'reference_gap',
@@ -305,14 +305,14 @@ trait FormatsResults
             'regression',
         ]];
 
-        foreach ($this->comparisonRowsAgainstBaseline($results, $baseline) as $row) {
+        foreach ($this->comparisonRowsAgainstReference($results, $reference) as $row) {
             $rows[] = [
                 (string) $row['scenario'],
                 (string) $row['subject'],
                 (string) $row['competitor'],
                 (string) $row['parameter_label'],
                 $this->formatNumber((float) $row['current_median']),
-                $this->formatNumber((float) $row['baseline_median']),
+                $this->formatNumber((float) $row['reference_median']),
                 $this->formatSignedPercentage((float) $row['delta_percentage']),
                 (string) $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
@@ -372,17 +372,17 @@ trait FormatsResults
 
     /**
      * @param list<BenchmarkResult> $results
-     * @param list<BenchmarkResult> $baseline
+     * @param list<BenchmarkResult> $reference
      * @param array<string, mixed>  $metadata
      */
-    private function asComparisonMarkdown(array $results, array $baseline, array $metadata = []): string
+    private function asComparisonMarkdown(array $results, array $reference, array $metadata = []): string
     {
         $lines = [
-            '| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |',
+            '| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Reference Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |',
             '| --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- | --- |',
         ];
 
-        foreach ($this->comparisonRowsAgainstBaseline($results, $baseline) as $row) {
+        foreach ($this->comparisonRowsAgainstReference($results, $reference) as $row) {
             $lines[] = sprintf(
                 '| %s | %s | %s | %s | %.3f | %.3f | %+.2f | %s | %s | %s | %s | %s |',
                 $row['scenario'],
@@ -390,7 +390,7 @@ trait FormatsResults
                 $this->displayCompetitorLabel((string) $row['competitor']),
                 $row['parameter_label'],
                 $row['current_median'],
-                $row['baseline_median'],
+                $row['reference_median'],
                 $row['delta_percentage'],
                 $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
@@ -449,21 +449,21 @@ trait FormatsResults
 
     /**
      * @param list<BenchmarkResult> $results
-     * @param list<BenchmarkResult> $baseline
+     * @param list<BenchmarkResult> $reference
      * @param array<string, mixed>  $metadata
      */
-    private function asComparisonTable(array $results, array $baseline, array $metadata = []): string
+    private function asComparisonTable(array $results, array $reference, array $metadata = []): string
     {
         $rows = [];
 
-        foreach ($this->comparisonRowsAgainstBaseline($results, $baseline) as $row) {
+        foreach ($this->comparisonRowsAgainstReference($results, $reference) as $row) {
             $rows[] = $this->tableRow(
                 (string) $row['scenario'],
                 (string) $row['subject'],
                 $this->displayCompetitorLabel((string) $row['competitor']),
                 (string) $row['parameter_label'],
                 $this->formatNumber((float) $row['current_median']),
-                $this->formatNumber((float) $row['baseline_median']),
+                $this->formatNumber((float) $row['reference_median']),
                 $this->formatSignedPercentage((float) $row['delta_percentage']),
                 (string) $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
@@ -474,9 +474,9 @@ trait FormatsResults
         }
 
         return $this->prependPlainMetadata($this->renderConsoleTable(
-            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Current (ns)', 'Baseline (ns)', 'Delta %', 'Winner', 'Reference Gap', 'Reference Gain', 'Significance', 'Regression'],
+            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Current (ns)', 'Reference (ns)', 'Delta %', 'Winner', 'Reference Gap', 'Reference Gain', 'Significance', 'Regression'],
             rows: $rows,
-            rightAlignedHeaders: ['Current (ns)', 'Baseline (ns)', 'Delta %', 'Reference Gap', 'Reference Gain'],
+            rightAlignedHeaders: ['Current (ns)', 'Reference (ns)', 'Delta %', 'Reference Gap', 'Reference Gain'],
         ), $metadata);
     }
 
@@ -639,16 +639,16 @@ trait FormatsResults
     }
 
     /**
-     * @param  list<BenchmarkResult>      $results
-     * @param  list<BenchmarkResult>      $baseline
-     * @return list<BaselineComparisonRow>
+     * @param  list<BenchmarkResult>        $results
+     * @param  list<BenchmarkResult>        $reference
+     * @return list<ReferenceComparisonRow>
      */
-    private function comparisonRowsAgainstBaseline(array $results, array $baseline): array
+    private function comparisonRowsAgainstReference(array $results, array $reference): array
     {
-        $baselineById = [];
+        $referenceById = [];
 
-        foreach ($baseline as $result) {
-            $baselineById[$result->identifier()] = $result;
+        foreach ($reference as $result) {
+            $referenceById[$result->identifier()] = $result;
         }
 
         $rows = [];
@@ -656,9 +656,9 @@ trait FormatsResults
         $significance = $this->significanceCalculator();
 
         foreach ($results as $result) {
-            $baselineResult = $baselineById[$result->identifier()] ?? null;
+            $referenceResult = $referenceById[$result->identifier()] ?? null;
 
-            if ($baselineResult === null) {
+            if ($referenceResult === null) {
                 continue;
             }
 
@@ -666,11 +666,11 @@ trait FormatsResults
             $tolerance = $result->regressionTolerance ?? 'n/a';
             $decision = $evaluator->evaluate(
                 current: $result,
-                baseline: $baselineResult,
+                baseline: $referenceResult,
                 tolerance: $result->regressionTolerance ?? '100%',
                 metric: $metric,
             );
-            $significanceResult = $significance->compare($baselineResult->samples, $result->samples);
+            $significanceResult = $significance->compare($referenceResult->samples, $result->samples);
 
             $rows[] = [
                 'scenario' => $result->scenario,
@@ -678,11 +678,11 @@ trait FormatsResults
                 'competitor' => $result->competitor,
                 'parameter_label' => $result->parameterLabel(),
                 'current_median' => $result->summary->median,
-                'baseline_median' => $baselineResult->summary->median,
+                'reference_median' => $referenceResult->summary->median,
                 'delta_percentage' => $decision->deltaPercentage,
-                'winner' => $this->baselineWinner($result, $baselineResult),
-                'reference_gap' => $this->baselineReferenceGap($result, $baselineResult),
-                'reference_gain' => $this->baselineReferenceGain($result, $baselineResult),
+                'winner' => $this->referenceWinner($result, $referenceResult),
+                'reference_gap' => $this->referenceGap($result, $referenceResult),
+                'reference_gain' => $this->referenceGain($result, $referenceResult),
                 'significance' => $significanceResult->toArray(),
                 'significance_label' => $this->formatSignificance($significanceResult),
                 'regression_label' => sprintf('%s @ %s', $metric->value, $tolerance),
@@ -711,31 +711,31 @@ trait FormatsResults
         return sprintf('%d/%d', $passed, count($result->thresholds));
     }
 
-    private function baselineWinner(BenchmarkResult $current, BenchmarkResult $baseline): string
+    private function referenceWinner(BenchmarkResult $current, BenchmarkResult $reference): string
     {
-        if ($current->summary->median === $baseline->summary->median) {
+        if ($current->summary->median === $reference->summary->median) {
             return 'tie';
         }
 
-        return $current->summary->median < $baseline->summary->median ? 'current' : 'baseline';
+        return $current->summary->median < $reference->summary->median ? 'current' : 'reference';
     }
 
-    private function baselineReferenceGap(BenchmarkResult $current, BenchmarkResult $baseline): float
+    private function referenceGap(BenchmarkResult $current, BenchmarkResult $reference): float
     {
-        $fastest = min($current->summary->median, $baseline->summary->median);
-        $slowest = max($current->summary->median, $baseline->summary->median);
+        $fastest = min($current->summary->median, $reference->summary->median);
+        $slowest = max($current->summary->median, $reference->summary->median);
 
         return $slowest / max($fastest, 1.0);
     }
 
-    private function baselineReferenceGain(BenchmarkResult $current, BenchmarkResult $baseline): float
+    private function referenceGain(BenchmarkResult $current, BenchmarkResult $reference): float
     {
-        if ($current->summary->median === $baseline->summary->median) {
+        if ($current->summary->median === $reference->summary->median) {
             return 0.0;
         }
 
-        $fastest = min($current->summary->median, $baseline->summary->median);
-        $slowest = max($current->summary->median, $baseline->summary->median);
+        $fastest = min($current->summary->median, $reference->summary->median);
+        $slowest = max($current->summary->median, $reference->summary->median);
 
         return (($slowest - $fastest) / $slowest) * 100;
     }
@@ -1117,7 +1117,7 @@ trait FormatsResults
     {
         $sections = [];
         $current = is_array($metadata['current'] ?? null) ? $metadata['current'] : [];
-        $baseline = is_array($metadata['baseline'] ?? null) ? $metadata['baseline'] : [];
+        $reference = is_array($metadata['reference'] ?? null) ? $metadata['reference'] : [];
 
         if (is_array($metadata['environment'] ?? null)) {
             $environment = $metadata['environment'];
@@ -1135,8 +1135,8 @@ trait FormatsResults
             ], 'violet');
         } elseif (is_array($current['environment'] ?? null)) {
             $currentEnvironment = $current['environment'];
-            $baselineEnvironment = is_array($baseline['environment'] ?? null)
-                ? $baseline['environment']
+            $referenceEnvironment = is_array($reference['environment'] ?? null)
+                ? $reference['environment']
                 : [];
 
             $sections[] = $this->renderPlainDetailSection('Environment', [
@@ -1146,8 +1146,8 @@ trait FormatsResults
                     $this->stringValue($currentEnvironment['os_family'] ?? null),
                     $this->stringValue($currentEnvironment['architecture'] ?? null),
                 ),
-                'Baseline PHP' => $this->stringValue($baselineEnvironment['php_version'] ?? null),
-                'Baseline' => $this->stringValue($metadata['baseline_name'] ?? null),
+                'Reference PHP' => $this->stringValue($referenceEnvironment['php_version'] ?? null),
+                'Reference' => $this->stringValue($metadata['reference_name'] ?? null),
             ], 'violet');
         }
 
@@ -1175,7 +1175,7 @@ trait FormatsResults
     {
         $sections = [];
         $current = is_array($metadata['current'] ?? null) ? $metadata['current'] : [];
-        $baseline = is_array($metadata['baseline'] ?? null) ? $metadata['baseline'] : [];
+        $reference = is_array($metadata['reference'] ?? null) ? $metadata['reference'] : [];
 
         if (is_array($metadata['environment'] ?? null)) {
             $environment = $metadata['environment'];
@@ -1190,16 +1190,16 @@ trait FormatsResults
             ]);
         } elseif (is_array($current['environment'] ?? null)) {
             $currentEnvironment = $current['environment'];
-            $baselineEnvironment = is_array($baseline['environment'] ?? null)
-                ? $baseline['environment']
+            $referenceEnvironment = is_array($reference['environment'] ?? null)
+                ? $reference['environment']
                 : [];
 
             $sections[] = implode(PHP_EOL, [
                 '## Environment',
                 sprintf('- Current PHP: `%s`', $this->stringValue($currentEnvironment['php_version'] ?? null)),
                 sprintf('- Current Platform: `%s %s`', $this->stringValue($currentEnvironment['os_family'] ?? null), $this->stringValue($currentEnvironment['architecture'] ?? null)),
-                sprintf('- Baseline PHP: `%s`', $this->stringValue($baselineEnvironment['php_version'] ?? null)),
-                sprintf('- Baseline: `%s`', $this->stringValue($metadata['baseline_name'] ?? null)),
+                sprintf('- Reference PHP: `%s`', $this->stringValue($referenceEnvironment['php_version'] ?? null)),
+                sprintf('- Reference: `%s`', $this->stringValue($metadata['reference_name'] ?? null)),
             ]);
         }
 

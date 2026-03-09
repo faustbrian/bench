@@ -10,8 +10,8 @@
 use Cline\Bench\Console\Concerns\FormatsResults;
 use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
-use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Enums\ThresholdOperator;
+use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\ThresholdResult;
 use Cline\Bench\Statistics\SummaryStatistics;
 

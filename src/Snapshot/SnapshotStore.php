@@ -146,9 +146,7 @@ final readonly class SnapshotStore
                     passed: (bool) ($threshold['passed'] ?? false),
                 ),
                 array_values(array_filter(
-                    is_array($result['thresholds'] ?? null)
-                        ? $result['thresholds']
-                        : (is_array($result['assertions'] ?? null) ? $result['assertions'] : []),
+                    is_array($result['thresholds'] ?? null) ? $result['thresholds'] : [],
                     is_array(...),
                 )),
             ),

@@ -12,8 +12,8 @@ namespace Cline\Bench\Console\Commands;
 use Cline\Bench\Comparison\ComparePolicyEvaluator;
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
+use Cline\Bench\Console\Concerns\ConfiguresReportOutput;
 use Cline\Bench\Console\Concerns\FormatsResults;
-use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Environment\CompatibilityMode;
 use Cline\Bench\Environment\EnvironmentCompatibility;
 use Cline\Bench\Environment\EnvironmentFingerprint;
@@ -21,8 +21,8 @@ use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
 use Cline\Bench\Execution\BenchmarkSelection;
 use Cline\Bench\Snapshot\Snapshot;
-use Cline\Bench\Storage\BaselineResolver;
-use Cline\Bench\Storage\ScenarioBaselineResolver;
+use Cline\Bench\Storage\ReferenceResolver;
+use Cline\Bench\Storage\ScenarioReferenceResolver;
 use InvalidArgumentException;
 use Override;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -54,49 +54,35 @@ use function throw_unless;
 final class CompareCommand extends Command
 {
     use FormatsResults;
-
-    /** @var list<string> */
-    private array $preferredCompetitors = ['struct', 'base'];
-
-    /** @var array<string, string> */
-    private array $competitorAliases = [];
-
-    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
-
-    private string $decimalSeparator = '.';
-
-    private string $thousandsSeparator = ',';
-
-    private int $rawNumberDecimals = 3;
-
-    private int $durationDecimals = 3;
-
-    private int $operationsDecimals = 0;
-
-    private int $ratioDecimals = 2;
-
-    private int $percentageDecimals = 1;
-
-    private int $deltaPercentageDecimals = 2;
-
-    private bool $significanceEnabled = true;
-
-    private float $significanceAlpha = 0.05;
-
-    private int $significanceMinimumSamples = 2;
+    use ConfiguresReportOutput {
+        ConfiguresReportOutput::preferredCompetitors insteadof FormatsResults;
+        ConfiguresReportOutput::competitorAliases insteadof FormatsResults;
+        ConfiguresReportOutput::comparisonReference insteadof FormatsResults;
+        ConfiguresReportOutput::decimalSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::thousandsSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::rawNumberDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::durationDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::operationsDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::ratioDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::percentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::deltaPercentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::significanceEnabled insteadof FormatsResults;
+        ConfiguresReportOutput::significanceAlpha insteadof FormatsResults;
+        ConfiguresReportOutput::significanceMinimumSamples insteadof FormatsResults;
+    }
 
     #[Override()]
     protected function configure(): void
     {
         $this
-            ->addArgument('against', InputArgument::OPTIONAL, 'Snapshot or run name')
+            ->addArgument('against', InputArgument::OPTIONAL, 'Reference name')
             ->addArgument('path', InputArgument::OPTIONAL, 'Benchmark path')
-            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Snapshot or run name')
+            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Reference name')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, md, csv)')
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Only run benchmarks matching the given text')
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
             ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor')
-            ->addOption('fail-on-winner-change', null, InputOption::VALUE_NONE, 'Fail when a benchmark winner changes versus the baseline suite')
+            ->addOption('fail-on-winner-change', null, InputOption::VALUE_NONE, 'Fail when a benchmark winner changes versus the reference suite')
             ->addOption('min-reference-gap', null, InputOption::VALUE_REQUIRED, 'Require each current reference gap to stay above the given threshold')
             ->addOption('no-significance', null, InputOption::VALUE_NONE, 'Disable significance calculation in rendered reports and policies');
     }
@@ -105,32 +91,18 @@ final class CompareCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $comparison = $config->comparison();
         $reporting = $config->reporting();
         $execution = $config->execution();
         $storage = $config->storage();
-        $this->preferredCompetitors = $comparison->preferredCompetitors;
-        $this->competitorAliases = $comparison->competitorAliases;
-        $this->comparisonReference = $comparison->comparisonReference;
-        $this->decimalSeparator = $reporting->decimalSeparator;
-        $this->thousandsSeparator = $reporting->thousandsSeparator;
-        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
-        $this->durationDecimals = $reporting->durationDecimals;
-        $this->operationsDecimals = $reporting->operationsDecimals;
-        $this->ratioDecimals = $reporting->ratioDecimals;
-        $this->percentageDecimals = $reporting->percentageDecimals;
-        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
-        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $comparison->significanceAlpha;
-        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
+        $this->initializeReportOutput($config, $this->flag($input, 'no-significance'));
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $current = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
-        $resolver = new BaselineResolver(
+        $resolver = new ReferenceResolver(
             $this->resolvePath($storage->snapshotPath),
             $this->resolvePath($storage->runPath),
         );
-        $snapshot = $this->resolveBaseline($input, $config, $current, $resolver);
+        $snapshot = $this->resolveReference($input, $config, $current, $resolver);
         $against = $snapshot->name;
 
         $environmentWarning = new EnvironmentCompatibility()->assess($snapshot->metadata);
@@ -148,7 +120,7 @@ final class CompareCommand extends Command
             baseline: $snapshot->results,
             failOnWinnerChange: $this->flag($input, 'fail-on-winner-change'),
             minimumReferenceGap: $this->nullableFloatOption($input, 'min-reference-gap'),
-            comparisonReference: $this->comparisonReference,
+            comparisonReference: $this->comparisonReference(),
         );
 
         $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value) {
@@ -168,13 +140,13 @@ final class CompareCommand extends Command
                         'default_iterations' => $execution->defaultIterations,
                         'default_revolutions' => $execution->defaultRevolutions,
                         'default_warmup_iterations' => $execution->defaultWarmupIterations,
-                        'significance_enabled' => $this->significanceEnabled,
-                        'significance_alpha' => $this->significanceAlpha,
-                        'significance_minimum_samples' => $this->significanceMinimumSamples,
+                        'significance_enabled' => $this->significanceEnabled(),
+                        'significance_alpha' => $this->significanceAlpha(),
+                        'significance_minimum_samples' => $this->significanceMinimumSamples(),
                     ],
                 ],
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $against,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $against,
             ]),
             'csv' => $this->asComparisonCsv($current, $snapshot->results),
             'md' => $this->asComparisonMarkdown($current, $snapshot->results, [
@@ -185,14 +157,14 @@ final class CompareCommand extends Command
                         'default_iterations' => $execution->defaultIterations,
                         'default_revolutions' => $execution->defaultRevolutions,
                         'default_warmup_iterations' => $execution->defaultWarmupIterations,
-                        'significance_enabled' => $this->significanceEnabled,
-                        'significance_alpha' => $this->significanceAlpha,
-                        'significance_minimum_samples' => $this->significanceMinimumSamples,
+                        'significance_enabled' => $this->significanceEnabled(),
+                        'significance_alpha' => $this->significanceAlpha(),
+                        'significance_minimum_samples' => $this->significanceMinimumSamples(),
                     ],
                     'selection' => $selection->toArray(),
                 ],
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $against,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $against,
             ]),
             default => $this->asComparisonTable($current, $snapshot->results, [
                 'current' => [
@@ -202,14 +174,14 @@ final class CompareCommand extends Command
                         'default_iterations' => $execution->defaultIterations,
                         'default_revolutions' => $execution->defaultRevolutions,
                         'default_warmup_iterations' => $execution->defaultWarmupIterations,
-                        'significance_enabled' => $this->significanceEnabled,
-                        'significance_alpha' => $this->significanceAlpha,
-                        'significance_minimum_samples' => $this->significanceMinimumSamples,
+                        'significance_enabled' => $this->significanceEnabled(),
+                        'significance_alpha' => $this->significanceAlpha(),
+                        'significance_minimum_samples' => $this->significanceMinimumSamples(),
                     ],
                     'selection' => $selection->toArray(),
                 ],
-                'baseline' => $snapshot->metadata,
-                'baseline_name' => $against,
+                'reference' => $snapshot->metadata,
+                'reference_name' => $against,
             ]),
         });
 
@@ -224,82 +196,6 @@ final class CompareCommand extends Command
         }
 
         return self::FAILURE;
-    }
-
-    /**
-     * @return list<string>
-     */
-    protected function preferredCompetitors(): array
-    {
-        return $this->preferredCompetitors;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function competitorAliases(): array
-    {
-        return $this->competitorAliases;
-    }
-
-    protected function comparisonReference(): ComparisonReference
-    {
-        return $this->comparisonReference;
-    }
-
-    protected function decimalSeparator(): string
-    {
-        return $this->decimalSeparator;
-    }
-
-    protected function thousandsSeparator(): string
-    {
-        return $this->thousandsSeparator;
-    }
-
-    protected function rawNumberDecimals(): int
-    {
-        return $this->rawNumberDecimals;
-    }
-
-    protected function durationDecimals(): int
-    {
-        return $this->durationDecimals;
-    }
-
-    protected function operationsDecimals(): int
-    {
-        return $this->operationsDecimals;
-    }
-
-    protected function ratioDecimals(): int
-    {
-        return $this->ratioDecimals;
-    }
-
-    protected function percentageDecimals(): int
-    {
-        return $this->percentageDecimals;
-    }
-
-    protected function deltaPercentageDecimals(): int
-    {
-        return $this->deltaPercentageDecimals;
-    }
-
-    protected function significanceEnabled(): bool
-    {
-        return $this->significanceEnabled;
-    }
-
-    protected function significanceAlpha(): float
-    {
-        return $this->significanceAlpha;
-    }
-
-    protected function significanceMinimumSamples(): int
-    {
-        return $this->significanceMinimumSamples;
     }
 
     private function nullableArgumentString(InputInterface $input, string $name): ?string
@@ -375,7 +271,7 @@ final class CompareCommand extends Command
     /**
      * @param list<BenchmarkResult> $current
      */
-    private function resolveBaseline(InputInterface $input, BenchConfig $config, array $current, BaselineResolver $resolver): Snapshot
+    private function resolveReference(InputInterface $input, BenchConfig $config, array $current, ReferenceResolver $resolver): Snapshot
     {
         $against = $this->againstReference($input);
 
@@ -383,17 +279,17 @@ final class CompareCommand extends Command
             return $resolver->resolve($against);
         }
 
-        if ($config->scenarioBaselines !== []) {
-            return new ScenarioBaselineResolver($resolver)->resolve(
+        if ($config->scenarioReferences !== []) {
+            return new ScenarioReferenceResolver($resolver)->resolve(
                 scenarios: array_values(array_unique(array_map(
                     static fn (BenchmarkResult $result): string => $result->scenario,
                     $current,
                 ))),
-                scenarioBaselines: $config->scenarioBaselines,
+                scenarioReferences: $config->scenarioReferences,
             );
         }
 
-        throw new InvalidArgumentException('Either the [against] argument, the [--against] option, or configured scenario baselines are required.');
+        throw new InvalidArgumentException('Either the [against] argument, the [--against] option, or configured scenario references are required.');
     }
 
     private function benchmarkPath(InputInterface $input, BenchConfig $config): string

@@ -18,8 +18,8 @@ use Cline\Bench\Execution\BenchmarkRunner;
 use Cline\Bench\Execution\BenchmarkSelection;
 use Cline\Bench\Snapshot\RegressionEvaluator;
 use Cline\Bench\Snapshot\Snapshot;
-use Cline\Bench\Storage\BaselineResolver;
-use Cline\Bench\Storage\ScenarioBaselineResolver;
+use Cline\Bench\Storage\ReferenceResolver;
+use Cline\Bench\Storage\ScenarioReferenceResolver;
 use InvalidArgumentException;
 use Override;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -44,16 +44,16 @@ use function throw_unless;
 /**
  * @author Brian Faust <brian@cline.sh>
  */
-#[AsCommand(name: 'snapshot:assert', description: 'Fail when regressions exceed the configured tolerance.')]
+#[AsCommand(name: 'snapshot:assert', description: 'Fail when regressions exceed the configured tolerance against a saved reference.')]
 final class SnapshotAssertCommand extends Command
 {
     #[Override()]
     protected function configure(): void
     {
         $this
-            ->addArgument('against', InputArgument::OPTIONAL, 'Snapshot name')
+            ->addArgument('against', InputArgument::OPTIONAL, 'Reference name')
             ->addArgument('path', InputArgument::OPTIONAL, 'Benchmark path')
-            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Snapshot name')
+            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Reference name')
             ->addOption('tolerance', null, InputOption::VALUE_REQUIRED, 'Allowed regression tolerance')
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Only run benchmarks matching the given text')
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
@@ -72,12 +72,12 @@ final class SnapshotAssertCommand extends Command
             null,
             $this->selection($input),
         );
-        $snapshot = $this->resolveBaseline(
+        $snapshot = $this->resolveReference(
             input: $input,
             config: $config,
             current: $current,
         );
-        $baselineById = [];
+        $referenceById = [];
 
         $environmentWarning = new EnvironmentCompatibility()->assess($snapshot->metadata);
 
@@ -90,14 +90,14 @@ final class SnapshotAssertCommand extends Command
         }
 
         foreach ($snapshot->results as $result) {
-            $baselineById[$result->identifier()] = $result;
+            $referenceById[$result->identifier()] = $result;
         }
 
         $evaluator = new RegressionEvaluator();
         $failed = false;
 
         foreach ($current as $result) {
-            $baseline = $baselineById[$result->identifier()] ?? null;
+            $baseline = $referenceById[$result->identifier()] ?? null;
 
             if ($baseline === null) {
                 continue;
@@ -196,11 +196,11 @@ final class SnapshotAssertCommand extends Command
     /**
      * @param list<BenchmarkResult> $current
      */
-    private function resolveBaseline(InputInterface $input, BenchConfig $config, array $current): Snapshot
+    private function resolveReference(InputInterface $input, BenchConfig $config, array $current): Snapshot
     {
         $storage = $config->storage();
         $comparison = $config->comparison();
-        $resolver = new BaselineResolver(
+        $resolver = new ReferenceResolver(
             $this->resolvePath($storage->snapshotPath),
             $this->resolvePath($storage->runPath),
         );
@@ -210,17 +210,17 @@ final class SnapshotAssertCommand extends Command
             return $resolver->resolve($against);
         }
 
-        if ($comparison->scenarioBaselines !== []) {
-            return new ScenarioBaselineResolver($resolver)->resolve(
+        if ($comparison->scenarioReferences !== []) {
+            return new ScenarioReferenceResolver($resolver)->resolve(
                 scenarios: array_values(array_unique(array_map(
                     static fn (BenchmarkResult $result): string => $result->scenario,
                     $current,
                 ))),
-                scenarioBaselines: $comparison->scenarioBaselines,
+                scenarioReferences: $comparison->scenarioReferences,
             );
         }
 
-        throw new InvalidArgumentException('Either the [against] argument, the [--against] option, or configured scenario baselines are required.');
+        throw new InvalidArgumentException('Either the [against] argument, the [--against] option, or configured scenario references are required.');
     }
 
     private function benchmarkPath(InputInterface $input, BenchConfig $config): string

@@ -39,7 +39,7 @@ describe('bench report', function (): void {
             ]);
 
             expect($statusCode)->toBe(0)
-                ->and($tester->getDisplay())->toContain('| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |')
+                ->and($tester->getDisplay())->toContain('| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Reference Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |')
                 ->and($tester->getDisplay())->toContain('| dto-transform | transform | Bench |')
                 ->and($tester->getDisplay())->toContain('| dto-transform | transform | Spatie data |')
                 ->and($tester->getDisplay())->toContain('Winner')
@@ -87,7 +87,7 @@ describe('bench report', function (): void {
                 '--format' => 'csv',
                 '--against' => 'baseline',
             ]))->toBe(0)
-                ->and($reportTester->getDisplay())->toContain('scenario,subject,competitor,parameter_label,current_median,baseline_median,delta_percentage')
+                ->and($reportTester->getDisplay())->toContain('scenario,subject,competitor,parameter_label,current_median,reference_median,delta_percentage')
                 ->and($reportTester->getDisplay())->toContain('dto-transform,transform,bench');
         } finally {
             if ($previousDirectory !== false) {

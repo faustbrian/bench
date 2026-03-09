@@ -30,7 +30,7 @@ final readonly class BenchConfig
         /** @var array<string, string> */
         public array $competitorAliases = [],
         /** @var array<string, string> */
-        public array $scenarioBaselines = [],
+        public array $scenarioReferences = [],
         public ?string $bootstrapPath = null,
         public int $defaultIterations = 5,
         public int $defaultRevolutions = 1,
@@ -112,7 +112,7 @@ final readonly class BenchConfig
         return new ComparisonConfig(
             preferredCompetitors: $this->preferredCompetitors,
             competitorAliases: $this->competitorAliases,
-            scenarioBaselines: $this->scenarioBaselines,
+            scenarioReferences: $this->scenarioReferences,
             comparisonReference: $this->comparisonReference,
             significanceEnabled: $this->significanceEnabled,
             significanceAlpha: $this->significanceAlpha,
@@ -201,11 +201,11 @@ final readonly class BenchConfig
     }
 
     /**
-     * @param array<string, string> $scenarioBaselines
+     * @param array<string, string> $scenarioReferences
      */
-    public function withScenarioBaselines(array $scenarioBaselines): self
+    public function withScenarioReferences(array $scenarioReferences): self
     {
-        return $this->copy(scenarioBaselines: $scenarioBaselines);
+        return $this->copy(scenarioReferences: $scenarioReferences);
     }
 
     public function withProgressMetric(Metric $progressMetric): self
@@ -293,7 +293,7 @@ final readonly class BenchConfig
     /**
      * @param null|list<string>          $preferredCompetitors
      * @param null|array<string, string> $competitorAliases
-     * @param null|array<string, string> $scenarioBaselines
+     * @param null|array<string, string> $scenarioReferences
      */
     private function copy(
         ?string $benchmarkPath = null,
@@ -301,7 +301,7 @@ final readonly class BenchConfig
         ?string $runPath = null,
         ?array $preferredCompetitors = null,
         ?array $competitorAliases = null,
-        ?array $scenarioBaselines = null,
+        ?array $scenarioReferences = null,
         ?string $bootstrapPath = null,
         bool $bootstrapPathIsSet = false,
         ?int $defaultIterations = null,
@@ -338,7 +338,7 @@ final readonly class BenchConfig
             runPath: $runPath ?? $this->runPath,
             preferredCompetitors: $preferredCompetitors ?? $this->preferredCompetitors,
             competitorAliases: $competitorAliases ?? $this->competitorAliases,
-            scenarioBaselines: $scenarioBaselines ?? $this->scenarioBaselines,
+            scenarioReferences: $scenarioReferences ?? $this->scenarioReferences,
             bootstrapPath: $bootstrapPathIsSet ? $bootstrapPath : $this->bootstrapPath,
             defaultIterations: $defaultIterations ?? $this->defaultIterations,
             defaultRevolutions: $defaultRevolutions ?? $this->defaultRevolutions,

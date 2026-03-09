@@ -15,32 +15,32 @@ use Cline\Bench\Snapshot\Snapshot;
  * @author Brian Faust <brian@faust.software>
  * @psalm-immutable
  */
-final readonly class ScenarioBaselineResolver
+final readonly class ScenarioReferenceResolver
 {
     public function __construct(
-        private BaselineResolver $resolver,
+        private ReferenceResolver $resolver,
     ) {}
 
     /**
      * @param list<string>          $scenarios
-     * @param array<string, string> $scenarioBaselines
+     * @param array<string, string> $scenarioReferences
      */
-    public function resolve(array $scenarios, array $scenarioBaselines): Snapshot
+    public function resolve(array $scenarios, array $scenarioReferences): Snapshot
     {
         $results = [];
         $metadata = [
-            'scenario_baselines' => [],
+            'scenario_references' => [],
         ];
 
         foreach ($scenarios as $scenario) {
-            $reference = $scenarioBaselines[$scenario] ?? null;
+            $reference = $scenarioReferences[$scenario] ?? null;
 
             if ($reference === null) {
                 continue;
             }
 
             $snapshot = $this->resolver->resolve($reference);
-            $metadata['scenario_baselines'][$scenario] = $reference;
+            $metadata['scenario_references'][$scenario] = $reference;
 
             foreach ($snapshot->results as $result) {
                 if ($result->scenario !== $scenario) {

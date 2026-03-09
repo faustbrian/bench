@@ -20,7 +20,7 @@ use function str_starts_with;
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
  */
-final readonly class BaselineResolver
+final readonly class ReferenceResolver
 {
     public function __construct(
         private string $snapshotPath,

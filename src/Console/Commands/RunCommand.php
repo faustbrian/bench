@@ -11,10 +11,9 @@ namespace Cline\Bench\Console\Commands;
 
 use Cline\Bench\Configuration\BenchConfig;
 use Cline\Bench\Configuration\BenchConfigLoader;
+use Cline\Bench\Console\Concerns\ConfiguresReportOutput;
 use Cline\Bench\Console\Concerns\FormatsResults;
-use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
-use Cline\Bench\Enums\TimeUnit;
 use Cline\Bench\Environment\EnvironmentFingerprint;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
@@ -63,44 +62,22 @@ use function throw_unless;
 final class RunCommand extends Command
 {
     use FormatsResults;
-
-    /** @var list<string> */
-    private array $preferredCompetitors = ['struct', 'base'];
-
-    /** @var array<string, string> */
-    private array $competitorAliases = [];
-
-    private Metric $progressMetric = Metric::Median;
-
-    private TimeUnit $progressTimeUnit = TimeUnit::Microseconds;
-
-    private ComparisonReference $comparisonReference = ComparisonReference::Closest;
-
-    private string $decimalSeparator = '.';
-
-    private string $thousandsSeparator = ',';
-
-    private int $rawNumberDecimals = 3;
-
-    private int $durationDecimals = 3;
-
-    private int $operationsDecimals = 0;
-
-    private int $progressTimeDecimals = 3;
-
-    private int $progressOperationsDecimals = 3;
-
-    private int $ratioDecimals = 2;
-
-    private int $percentageDecimals = 1;
-
-    private int $deltaPercentageDecimals = 2;
-
-    private bool $significanceEnabled = true;
-
-    private float $significanceAlpha = 0.05;
-
-    private int $significanceMinimumSamples = 2;
+    use ConfiguresReportOutput {
+        ConfiguresReportOutput::preferredCompetitors insteadof FormatsResults;
+        ConfiguresReportOutput::competitorAliases insteadof FormatsResults;
+        ConfiguresReportOutput::comparisonReference insteadof FormatsResults;
+        ConfiguresReportOutput::decimalSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::thousandsSeparator insteadof FormatsResults;
+        ConfiguresReportOutput::rawNumberDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::durationDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::operationsDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::ratioDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::percentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::deltaPercentageDecimals insteadof FormatsResults;
+        ConfiguresReportOutput::significanceEnabled insteadof FormatsResults;
+        ConfiguresReportOutput::significanceAlpha insteadof FormatsResults;
+        ConfiguresReportOutput::significanceMinimumSamples insteadof FormatsResults;
+    }
 
     #[Override()]
     protected function configure(): void
@@ -119,26 +96,8 @@ final class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $comparison = $config->comparison();
         $reporting = $config->reporting();
-        $this->preferredCompetitors = $comparison->preferredCompetitors;
-        $this->competitorAliases = $comparison->competitorAliases;
-        $this->progressMetric = $reporting->progressMetric;
-        $this->progressTimeUnit = $reporting->progressTimeUnit;
-        $this->comparisonReference = $comparison->comparisonReference;
-        $this->decimalSeparator = $reporting->decimalSeparator;
-        $this->thousandsSeparator = $reporting->thousandsSeparator;
-        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
-        $this->durationDecimals = $reporting->durationDecimals;
-        $this->operationsDecimals = $reporting->operationsDecimals;
-        $this->progressTimeDecimals = $reporting->progressTimeDecimals;
-        $this->progressOperationsDecimals = $reporting->progressOperationsDecimals;
-        $this->ratioDecimals = $reporting->ratioDecimals;
-        $this->percentageDecimals = $reporting->percentageDecimals;
-        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
-        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $comparison->significanceAlpha;
-        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
+        $this->initializeReportOutput($config, $this->flag($input, 'no-significance'));
         $this->bootstrap($config);
         $format = $this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value;
         $selection = $this->selection($input);
@@ -237,82 +196,6 @@ final class RunCommand extends Command
         return self::FAILURE;
     }
 
-    /**
-     * @return list<string>
-     */
-    protected function preferredCompetitors(): array
-    {
-        return $this->preferredCompetitors;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function competitorAliases(): array
-    {
-        return $this->competitorAliases;
-    }
-
-    protected function comparisonReference(): ComparisonReference
-    {
-        return $this->comparisonReference;
-    }
-
-    protected function decimalSeparator(): string
-    {
-        return $this->decimalSeparator;
-    }
-
-    protected function thousandsSeparator(): string
-    {
-        return $this->thousandsSeparator;
-    }
-
-    protected function rawNumberDecimals(): int
-    {
-        return $this->rawNumberDecimals;
-    }
-
-    protected function durationDecimals(): int
-    {
-        return $this->durationDecimals;
-    }
-
-    protected function operationsDecimals(): int
-    {
-        return $this->operationsDecimals;
-    }
-
-    protected function ratioDecimals(): int
-    {
-        return $this->ratioDecimals;
-    }
-
-    protected function percentageDecimals(): int
-    {
-        return $this->percentageDecimals;
-    }
-
-    protected function deltaPercentageDecimals(): int
-    {
-        return $this->deltaPercentageDecimals;
-    }
-
-    protected function significanceEnabled(): bool
-    {
-        return $this->significanceEnabled;
-    }
-
-    protected function significanceAlpha(): float
-    {
-        return $this->significanceAlpha;
-    }
-
-    protected function significanceMinimumSamples(): int
-    {
-        return $this->significanceMinimumSamples;
-    }
-
     private function benchmarkPath(InputInterface $input, BenchConfig $config): string
     {
         $value = $input->getArgument('path');
@@ -386,9 +269,9 @@ final class RunCommand extends Command
                 'default_iterations' => $config->defaultIterations,
                 'default_revolutions' => $config->defaultRevolutions,
                 'default_warmup_iterations' => $config->defaultWarmupIterations,
-                'significance_enabled' => $this->significanceEnabled,
-                'significance_alpha' => $this->significanceAlpha,
-                'significance_minimum_samples' => $this->significanceMinimumSamples,
+                'significance_enabled' => $this->significanceEnabled(),
+                'significance_alpha' => $this->significanceAlpha(),
+                'significance_minimum_samples' => $this->significanceMinimumSamples(),
             ],
         ];
     }
@@ -581,7 +464,7 @@ final class RunCommand extends Command
 
     private function formatOperationsMetric(BenchmarkResult $result): string
     {
-        return sprintf('%s ops/s', $this->formatMetricNumber($result->summary->operationsPerSecond, $this->progressOperationsDecimals));
+        return sprintf('%s ops/s', $this->formatMetricNumber($result->summary->operationsPerSecond, $this->progressOperationsDecimals()));
     }
 
     private function formatConfiguredTimeMetric(BenchmarkResult $result): string
@@ -593,7 +476,7 @@ final class RunCommand extends Command
 
         [$scaled, $unit] = $this->convertNanoseconds($value);
 
-        return sprintf('%s %s', $this->formatMetricNumber($scaled, $this->progressTimeDecimals), $unit);
+        return sprintf('%s %s', $this->formatMetricNumber($scaled, $this->progressTimeDecimals()), $unit);
     }
 
     private function progressMetricLabel(): string
@@ -620,12 +503,12 @@ final class RunCommand extends Command
 
     private function normalizedProgressMetric(): Metric
     {
-        return $this->progressMetric;
+        return $this->progressMetric();
     }
 
     private function normalizedProgressTimeUnit(): string
     {
-        return mb_strtolower($this->progressTimeUnit->value);
+        return mb_strtolower($this->progressTimeUnit()->value);
     }
 
     private function formatMetricNumber(float $value, int $decimals): string
@@ -633,8 +516,8 @@ final class RunCommand extends Command
         return number_format(
             $value,
             $decimals,
-            $this->decimalSeparator,
-            $this->thousandsSeparator,
+            $this->decimalSeparator(),
+            $this->thousandsSeparator(),
         );
     }
 }

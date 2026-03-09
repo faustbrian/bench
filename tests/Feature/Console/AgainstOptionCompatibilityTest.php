@@ -37,7 +37,7 @@ describe('against option compatibility', function (): void {
                 '--against' => 'snapshot:latest',
                 'path' => $fixturePath,
             ]))->toBe(0)
-                ->and($tester->getDisplay())->toContain('Baseline')
+                ->and($tester->getDisplay())->toContain('Reference')
                 ->and($tester->getDisplay())->toContain('Winner');
         } finally {
             if ($previousDirectory !== false) {
