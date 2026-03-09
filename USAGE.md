@@ -265,6 +265,7 @@ Flags:
 - `--group=<group>` and repeated `--group=<group>`
 - `--competitor=<id>` and repeated `--competitor=<id>`
 - `--no-progress`
+- `--no-significance`
 
 Examples:
 
@@ -282,6 +283,8 @@ Behavior:
 
 - discovers benchmarks from the provided path or configured benchmark path
 - shows live progress in `table` mode unless `--no-progress` is set
+- disables significance labels in rendered output when `--no-significance`
+  is set
 - returns a non-zero exit code when benchmark assertions fail
 - saves runs to `.bench/runs/<name>.json` and mirrors them to `latest.json`
 
@@ -302,6 +305,7 @@ Flags:
 - `--filter=<text>`
 - `--group=<group>` and repeated `--group=<group>`
 - `--competitor=<id>` and repeated `--competitor=<id>`
+- `--no-significance`
 
 Behavior:
 
@@ -330,6 +334,7 @@ Flags:
 - `--competitor=<id>` and repeated `--competitor=<id>`
 - `--fail-on-winner-change`
 - `--min-reference-gap=<float>`
+- `--no-significance`
 
 Examples:
 
@@ -562,6 +567,9 @@ Current defaults:
 - ratio decimals: `2`
 - percentage decimals: `1`
 - delta percentage decimals: `2`
+- significance enabled: `true`
+- significance alpha: `0.05`
+- significance minimum samples: `2`
 - compatibility mode: `warn`
 
 ### Path and Bootstrap Controls
@@ -581,9 +589,9 @@ return BenchConfig::default()
 ### Execution Controls
 
 - `withDefaultIterations()` sets fallback iterations
-- `withDefaultRevolutions()` sets fallback revs
+- `withDefaultRevolutions()` sets fallback revolutions
 - `withDefaultWarmupIterations()` sets fallback warmup iterations
-- `withCalibrationBudgetNanoseconds()` raises revs until a minimum
+- `withCalibrationBudgetNanoseconds()` raises revolutions until a minimum
   measurement budget is reached
 - `withProcessIsolation()` runs each measured sample in a child process
 
@@ -603,6 +611,14 @@ return BenchConfig::default()
 - `withDefaultRegression(metric: Metric::Median, tolerance: '5%')`
 
 Use this when you want a project-wide fallback for snapshot assertions.
+
+### Significance Controls
+
+- `withSignificance(alpha: 0.05, minimumSamples: 2)`
+- `withoutSignificance()`
+
+Use these when you want to tighten or disable significance reporting in
+comparison outputs.
 
 ### Output and Formatting Controls
 

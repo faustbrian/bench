@@ -126,7 +126,7 @@ describe('FormatsResults golden outputs', function (): void {
             ->and($table)->toContain('│ Valinor Ops/s │ Struct Ops/s │ Bag Ops/s │ Spatie Ops/s │');
     });
 
-    it('can render summary spread against the slowest competitor', function (): void {
+    it('can render summary reference gap against the slowest competitor', function (): void {
         $renderer = new class()
         {
             use FormatsResults;

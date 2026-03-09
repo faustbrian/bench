@@ -23,3 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   string-based examples
 - Comparison outputs and internal comparison types now consistently use
   reference-gap naming instead of the older ratio/speed-ratio terms
+- Significance calculation is now configurable through `BenchConfig`,
+  including alpha, minimum sample size, and disabling significance
+- Remaining docs and tests now use `revolutions` and `reference gap`
+  terminology consistently
