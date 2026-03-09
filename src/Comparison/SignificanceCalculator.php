@@ -20,13 +20,14 @@ use function usort;
 /**
  * Mann-Whitney U test with a normal approximation.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
-final class SignificanceCalculator
+final readonly class SignificanceCalculator
 {
     public function __construct(
-        private readonly bool $enabled = true,
-        private readonly float $alpha = 0.05,
-        private readonly int $minimumSamples = 2,
+        private bool $enabled = true,
+        private float $alpha = 0.05,
+        private int $minimumSamples = 2,
     ) {}
 
     /**
