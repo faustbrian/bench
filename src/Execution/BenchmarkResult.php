@@ -14,8 +14,12 @@ use Cline\Bench\Statistics\SummaryStatistics;
 
 use const JSON_THROW_ON_ERROR;
 
+use function array_is_list;
+use function array_keys;
 use function array_map;
+use function is_array;
 use function json_encode;
+use function ksort;
 use function sprintf;
 
 /**
@@ -37,6 +41,7 @@ final readonly class BenchmarkResult
         public SummaryStatistics $summary,
         public array $samples,
         public array $parameters = [],
+        public ?string $caseLabel = null,
         public array $groups = [],
         public array $assertions = [],
         public ?Metric $regressionMetric = null,
@@ -56,11 +61,15 @@ final readonly class BenchmarkResult
 
     public function parameterLabel(): string
     {
+        if ($this->caseLabel !== null && $this->caseLabel !== '') {
+            return $this->caseLabel;
+        }
+
         if ($this->parameters === []) {
             return 'default';
         }
 
-        return json_encode($this->parameters, JSON_THROW_ON_ERROR);
+        return json_encode(self::canonicalizeParameters($this->parameters), JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -75,6 +84,7 @@ final readonly class BenchmarkResult
             'summary' => $this->summary->toArray(),
             'samples' => $this->samples,
             'parameters' => $this->parameters,
+            'case_label' => $this->caseLabel,
             'parameter_label' => $this->parameterLabel(),
             'groups' => $this->groups,
             'assertions' => array_map(
@@ -86,5 +96,39 @@ final readonly class BenchmarkResult
                 'tolerance' => $this->regressionTolerance,
             ],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed> $parameters
+     * @return array<string, mixed>
+     */
+    private static function canonicalizeParameters(array $parameters): array
+    {
+        $canonical = [];
+
+        foreach (array_keys($parameters) as $key) {
+            $value = $parameters[$key];
+            $canonical[$key] = is_array($value) ? self::canonicalizeValue($value) : $value;
+        }
+
+        ksort($canonical);
+
+        return $canonical;
+    }
+
+    /**
+     * @param array<mixed> $value
+     */
+    private static function canonicalizeValue(array $value): mixed
+    {
+        if (array_is_list($value)) {
+            return array_map(
+                static fn (mixed $item): mixed => is_array($item) ? self::canonicalizeValue($item) : $item,
+                $value,
+            );
+        }
+
+        /** @var array<string, mixed> $value */
+        return self::canonicalizeParameters($value);
     }
 }

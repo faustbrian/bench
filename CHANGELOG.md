@@ -15,3 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Assertion and regression metadata now use enum cases instead of raw strings
 - `Revs` has been renamed to `Revolutions` in the public benchmark API
+- Parameterized benchmark identities now use canonical labels, with
+  optional `_case` names for stable snapshots and named cases

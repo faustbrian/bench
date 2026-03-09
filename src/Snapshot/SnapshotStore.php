@@ -130,6 +130,9 @@ final readonly class SnapshotStore
             ),
             samples: $samples,
             parameters: $parameters,
+            caseLabel: $this->stringValue($result['case_label'] ?? null) !== ''
+                ? $this->stringValue($result['case_label'] ?? null)
+                : null,
             groups: array_values(array_filter(
                 is_array($result['groups'] ?? null) ? $result['groups'] : [],
                 is_string(...),

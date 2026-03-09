@@ -12,6 +12,7 @@ use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Execution\BenchmarkRunner;
 use Tests\Fixtures\Benchmarks\CalibratedBench;
+use Tests\Fixtures\Benchmarks\CaseLabeledBench;
 use Tests\Fixtures\Benchmarks\DefaultConfiguredHookedBench;
 use Tests\Fixtures\Benchmarks\HookedBench;
 use Tests\Fixtures\Benchmarks\IsolatedBench;
@@ -62,6 +63,19 @@ describe('BenchmarkRunner', function (): void {
             ->and($parameterizedResults[0]->parameters)->toBe(['size' => 'small', 'multiplier' => 10])
             ->and($parameterizedResults[1]->parameters)->toBe(['size' => 'large', 'multiplier' => 100])
             ->and(ParameterizedBench::$sizes)->toBe(['small', 'large']);
+    });
+
+    it('uses explicit case labels without passing them into benchmark arguments', function (): void {
+        CaseLabeledBench::reset();
+
+        $results = new BenchmarkRunner()->runPath(__DIR__.'/../../Fixtures/Benchmarks/CaseLabeledBench.php');
+
+        expect($results)->toHaveCount(2)
+            ->and($results[0]->parameterLabel())->toBe('small-payload')
+            ->and($results[0]->parameters)->toBe(['size' => 'small'])
+            ->and($results[1]->parameterLabel())->toBe('large-payload')
+            ->and($results[1]->parameters)->toBe(['size' => 'large'])
+            ->and(CaseLabeledBench::$sizes)->toBe(['small', 'large']);
     });
 
     it('uses config defaults for iterations revs and warmup', function (): void {

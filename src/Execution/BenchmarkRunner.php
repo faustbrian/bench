@@ -22,6 +22,7 @@ use RuntimeException;
 use const JSON_THROW_ON_ERROR;
 use const PHP_BINARY;
 
+use function array_key_exists;
 use function ceil;
 use function count;
 use function dirname;
@@ -117,6 +118,8 @@ final readonly class BenchmarkRunner
      */
     private function runBenchmark(DiscoveredBenchmark $benchmark, array $parameters, BenchConfig $config): BenchmarkResult
     {
+        $caseLabel = $this->caseLabel($parameters);
+        $parameters = $this->benchmarkParameters($parameters);
         $revolutions = $this->calibratedRevolutions($benchmark, $parameters, $config);
 
         if ($config->processIsolation) {
@@ -142,6 +145,7 @@ final readonly class BenchmarkRunner
             summary: $summary,
             samples: $samples,
             parameters: $parameters,
+            caseLabel: $caseLabel,
             groups: $benchmark->groups,
             assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
             regressionMetric: $benchmark->regressionMetric,
@@ -212,6 +216,9 @@ final readonly class BenchmarkRunner
      */
     private function runIsolatedBenchmark(DiscoveredBenchmark $benchmark, array $parameters, int $revolutions): BenchmarkResult
     {
+        $caseLabel = $this->caseLabel($parameters);
+        $parameters = $this->benchmarkParameters($parameters);
+
         for ($iteration = 0; $iteration < $benchmark->warmupIterations; ++$iteration) {
             $this->isolatedSample($benchmark, $parameters, $revolutions);
         }
@@ -231,6 +238,7 @@ final readonly class BenchmarkRunner
             summary: $summary,
             samples: $samples,
             parameters: $parameters,
+            caseLabel: $caseLabel,
             groups: $benchmark->groups,
             assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
             regressionMetric: $benchmark->regressionMetric,
@@ -324,6 +332,33 @@ PHP;
         for ($revolution = 0; $revolution < $revolutions; ++$revolution) {
             $instance->{$method}(...$parameters);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function caseLabel(array $parameters): ?string
+    {
+        if (!array_key_exists('_case', $parameters) || !is_string($parameters['_case'])) {
+            return null;
+        }
+
+        return $parameters['_case'];
+    }
+
+    /**
+     * @param  array<string, mixed> $parameters
+     * @return array<string, mixed>
+     */
+    private function benchmarkParameters(array $parameters): array
+    {
+        if (!array_key_exists('_case', $parameters)) {
+            return $parameters;
+        }
+
+        unset($parameters['_case']);
+
+        return $parameters;
     }
 
     /**
