@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Comparison\ComparisonEngine;
+use Cline\Bench\Comparison\SignificanceStatus;
 use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Statistics\SummaryStatistics;
@@ -60,10 +61,10 @@ describe('ComparisonEngine', function (): void {
         expect($report->rows)->toHaveCount(2)
             ->and($report->rows[0]->winner)->toBe('bench')
             ->and($report->rows[0]->deltaPercentage)->toBe(0.0)
-            ->and($report->rows[0]->significance)->toBe('winner')
+            ->and($report->rows[0]->significance?->status)->toBe(SignificanceStatus::Winner)
             ->and($report->rows[1]->winner)->toBe('bench')
             ->and(abs($report->rows[1]->deltaPercentage - 20.0))->toBeLessThan(0.001)
-            ->and($report->rows[1]->significance)->toContain('p=')
+            ->and($report->rows[1]->significance?->pValue)->not->toBeNull()
             ->and(abs($report->geometricMeanReferenceGap - 1.2))->toBeLessThan(0.001);
     });
 

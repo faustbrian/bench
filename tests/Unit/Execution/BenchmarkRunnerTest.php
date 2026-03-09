@@ -127,6 +127,88 @@ describe('BenchmarkRunner', function (): void {
             ->and(IsolatedBench::$parentProcessCalls)->toBe(0);
     });
 
+    it('can isolate benchmark execution from an installed vendor package path', function (): void {
+        $workingDirectory = sys_get_temp_dir().'/bench-isolated-install-'.bin2hex(random_bytes(8));
+        $projectDirectory = $workingDirectory.'/project';
+        $benchmarkDirectory = $projectDirectory.'/benchmarks';
+        $sourceDirectory = $projectDirectory.'/src';
+        $subdirectory = $projectDirectory.'/nested/dir';
+        $benchmarkPath = $benchmarkDirectory.'/InstalledBench.php';
+        $autoloadPath = $projectDirectory.'/vendor/autoload.php';
+        $helperPath = $sourceDirectory.'/ProjectHelper.php';
+        $previousDirectory = getcwd();
+
+        mkdir($benchmarkDirectory, 0o755, true);
+        mkdir($sourceDirectory, 0o755, true);
+        mkdir(dirname($autoloadPath), 0o755, true);
+        mkdir($subdirectory, 0o755, true);
+
+        file_put_contents($autoloadPath, sprintf(
+            "<?php declare(strict_types=1);\n\nrequire %s;\n\nspl_autoload_register(static function (string \$class): void {\n    if (\$class !== 'InstalledBench\\\\ProjectHelper') {\n        return;\n    }\n\n    require %s;\n});\n",
+            var_export(__DIR__.'/../../../vendor/autoload.php', true),
+            var_export($helperPath, true),
+        ));
+
+        file_put_contents($helperPath, <<<'PHP'
+<?php declare(strict_types=1);
+
+namespace InstalledBench;
+
+final class ProjectHelper
+{
+    public static int $calls = 0;
+
+    public static function touch(): void
+    {
+        ++self::$calls;
+    }
+}
+PHP);
+
+        file_put_contents($benchmarkPath, <<<'PHP'
+<?php declare(strict_types=1);
+
+namespace InstalledBench;
+
+use Cline\Bench\Attributes\Bench;
+use Cline\Bench\Attributes\Competitor;
+use Cline\Bench\Attributes\Iterations;
+use Cline\Bench\Attributes\Revolutions;
+use Cline\Bench\Attributes\Scenario;
+
+#[Scenario('installed')]
+#[Competitor('bench')]
+#[Iterations(1)]
+final class InstalledBench
+{
+    #[Bench('noop')]
+    #[Revolutions(1)]
+    public function benchNoop(): void
+    {
+        ProjectHelper::touch();
+    }
+}
+PHP);
+
+        chdir($subdirectory);
+
+        try {
+            $results = new BenchmarkRunner()->runPath(
+                $benchmarkPath,
+                BenchConfig::default()
+                    ->withDefaultIterations(1)
+                    ->withProcessIsolation(true),
+            );
+
+            expect($results)->toHaveCount(1)
+                ->and($results[0]->summary->samples)->toBe(1);
+        } finally {
+            if ($previousDirectory !== false) {
+                chdir($previousDirectory);
+            }
+        }
+    });
+
     it('creates a fresh benchmark instance for each warmup and measured iteration', function (): void {
         IterationIsolatedBench::reset();
 

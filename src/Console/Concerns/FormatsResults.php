@@ -12,6 +12,7 @@ namespace Cline\Bench\Console\Concerns;
 use Cline\Bench\Comparison\ComparisonEngine;
 use Cline\Bench\Comparison\ComparisonRow;
 use Cline\Bench\Comparison\SignificanceCalculator;
+use Cline\Bench\Comparison\SignificanceResult;
 use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
@@ -49,7 +50,6 @@ use function sprintf;
 use function str_contains;
 use function str_repeat;
 use function str_replace;
-use function str_starts_with;
 use function strcmp;
 use function usort;
 
@@ -295,7 +295,7 @@ trait FormatsResults
                 (string) $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
                 $this->formatPercentage((float) $row['reference_gain']),
-                $this->formatSignificance((string) $row['significance']),
+                (string) $row['significance_label'],
                 (string) $row['regression_label'],
             ];
         }
@@ -373,7 +373,7 @@ trait FormatsResults
                 $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
                 $this->formatPercentage((float) $row['reference_gain']),
-                $this->formatSignificance((string) $row['significance']),
+                (string) $row['significance_label'],
                 $row['regression_label'],
             );
         }
@@ -446,7 +446,7 @@ trait FormatsResults
                 (string) $row['winner'],
                 $this->formatRatio((float) $row['reference_gap']),
                 $this->formatPercentage((float) $row['reference_gain']),
-                $this->formatSignificance((string) $row['significance']),
+                (string) $row['significance_label'],
                 (string) $row['regression_label'],
             );
         }
@@ -608,7 +608,7 @@ trait FormatsResults
                     'delta_percentage' => $row->deltaPercentage,
                     'reference_gap' => $row->referenceGap,
                     'reference_gain' => $row->referenceGain,
-                    'significance' => $this->formatSignificance($row->significance ?? 'n/a'),
+                    'significance' => ($row->significance ?? $this->significanceCalculator()->winner())->toArray(),
                 ],
                 $comparison->rows,
             ),
@@ -617,9 +617,9 @@ trait FormatsResults
     }
 
     /**
-     * @param  list<BenchmarkResult>             $results
-     * @param  list<BenchmarkResult>             $baseline
-     * @return list<array<string, float|string>>
+     * @param  list<BenchmarkResult>      $results
+     * @param  list<BenchmarkResult>      $baseline
+     * @return list<array<string, mixed>>
      */
     private function comparisonRowsAgainstBaseline(array $results, array $baseline): array
     {
@@ -648,6 +648,7 @@ trait FormatsResults
                 tolerance: $result->regressionTolerance ?? '100%',
                 metric: $metric,
             );
+            $significanceResult = $significance->compare($baselineResult->samples, $result->samples);
 
             $rows[] = [
                 'scenario' => $result->scenario,
@@ -660,7 +661,8 @@ trait FormatsResults
                 'winner' => $this->baselineWinner($result, $baselineResult),
                 'reference_gap' => $this->baselineReferenceGap($result, $baselineResult),
                 'reference_gain' => $this->baselineReferenceGain($result, $baselineResult),
-                'significance' => $this->formatSignificance($significance->compare($baselineResult->samples, $result->samples)),
+                'significance' => $significanceResult->toArray(),
+                'significance_label' => $this->formatSignificance($significanceResult),
                 'regression_label' => sprintf('%s @ %s', $metric->value, $tolerance),
             ];
         }
@@ -774,14 +776,9 @@ trait FormatsResults
         return $prefix.$this->formatLocalized($value, $this->deltaPercentageDecimals()).'%';
     }
 
-    private function formatSignificance(string $value): string
+    private function formatSignificance(SignificanceResult $result): string
     {
-        return match (true) {
-            $value === 'disabled' => 'disabled',
-            $value === 'winner' => 'fastest',
-            str_starts_with($value, 'ns ') => str_replace('ns ', 'not significant ', $value),
-            default => $value,
-        };
+        return $result->label();
     }
 
     private function significanceCalculator(): SignificanceCalculator

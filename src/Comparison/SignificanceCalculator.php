@@ -14,7 +14,6 @@ use function count;
 use function exp;
 use function max;
 use function min;
-use function sprintf;
 use function sqrt;
 use function usort;
 
@@ -34,23 +33,28 @@ final class SignificanceCalculator
      * @param list<float> $baseline
      * @param list<float> $candidate
      */
-    public function compare(array $baseline, array $candidate): string
+    public function compare(array $baseline, array $candidate): SignificanceResult
     {
         if (!$this->enabled) {
-            return 'disabled';
+            return SignificanceResult::disabled($this->alpha, $this->minimumSamples);
         }
 
         if (count($baseline) < $this->minimumSamples || count($candidate) < $this->minimumSamples) {
-            return 'n/a';
+            return SignificanceResult::notAvailable($this->alpha, $this->minimumSamples);
         }
 
         $pValue = $this->pValue($baseline, $candidate);
 
         if ($pValue < $this->alpha) {
-            return sprintf('significant (p=%.3f)', $pValue);
+            return SignificanceResult::significant($pValue, $this->alpha, $this->minimumSamples);
         }
 
-        return sprintf('ns (p=%.3f)', $pValue);
+        return SignificanceResult::notSignificant($pValue, $this->alpha, $this->minimumSamples);
+    }
+
+    public function winner(): SignificanceResult
+    {
+        return SignificanceResult::winner($this->alpha, $this->minimumSamples);
     }
 
     /**

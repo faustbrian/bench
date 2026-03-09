@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Comparison\SignificanceCalculator;
+use Cline\Bench\Comparison\SignificanceStatus;
 
 describe('SignificanceCalculator', function (): void {
     it('uses a configurable alpha threshold', function (): void {
@@ -17,28 +18,28 @@ describe('SignificanceCalculator', function (): void {
         expect(
             new SignificanceCalculator(alpha: 0.10)->compare($baseline, $candidate),
         )
-            ->toContain('significant')
+            ->toHaveProperty('status', SignificanceStatus::Significant)
             ->and(
                 new SignificanceCalculator(alpha: 0.05)->compare($baseline, $candidate),
             )
-            ->toContain('ns');
+            ->toHaveProperty('status', SignificanceStatus::NotSignificant);
     });
 
     it('can disable significance output entirely', function (): void {
         expect(
             new SignificanceCalculator(enabled: false)->compare([1.0, 2.0], [3.0, 4.0]),
         )
-            ->toBe('disabled');
+            ->toHaveProperty('status', SignificanceStatus::Disabled);
     });
 
     it('requires a configurable minimum sample size', function (): void {
         expect(
             new SignificanceCalculator(minimumSamples: 3)->compare([1.0, 2.0], [3.0, 4.0]),
         )
-            ->toBe('n/a')
+            ->toHaveProperty('status', SignificanceStatus::NotAvailable)
             ->and(
                 new SignificanceCalculator(minimumSamples: 2)->compare([1.0, 2.0], [3.0, 4.0]),
             )
-            ->not->toBe('n/a');
+            ->not->toHaveProperty('status', SignificanceStatus::NotAvailable);
     });
 });

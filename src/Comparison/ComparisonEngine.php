@@ -69,7 +69,7 @@ final readonly class ComparisonEngine
                             referenceGap: max(1.0, $referenceGap),
                             referenceGain: max(0.0, $referenceGain),
                             significance: $result === $fastest
-                                ? 'winner'
+                                ? $this->significance->winner()
                                 : $this->significance->compare($fastest->samples, $result->samples),
                         );
                     }

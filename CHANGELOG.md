@@ -29,3 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   terminology consistently
 - The packaged `bin/bench` entrypoint now resolves Composer autoloading
   correctly from installed `vendor/cline/bench` paths
+- Process-isolated benchmarks now resolve Composer autoloading from the
+  benchmark source path before falling back to the current working
+  directory or package-local autoloaders
+- JSON comparison output now exposes structured significance metadata,
+  and the comparison domain uses typed significance results instead of
+  magic strings

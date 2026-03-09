@@ -71,6 +71,13 @@ describe('bench run', function (): void {
                 'winner',
                 'delta_percentage',
                 'significance',
+            ])
+            ->and($payload['comparison']['rows'][0]['significance'])->toHaveKeys([
+                'status',
+                'label',
+                'p_value',
+                'alpha',
+                'minimum_samples',
             ]);
     });
 

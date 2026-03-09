@@ -252,7 +252,7 @@ final readonly class BenchmarkRunner
     private function isolatedSample(DiscoveredBenchmark $benchmark, array $parameters, int $revolutions): float
     {
         $payload = json_encode([
-            'autoload' => $this->autoloadPath(),
+            'autoload' => $this->autoloadPath($benchmark->sourcePath),
             'source_path' => $benchmark->sourcePath,
             'class_name' => $benchmark->className,
             'method_name' => $benchmark->methodName,
@@ -299,8 +299,26 @@ PHP;
         return (float) ($decoded['elapsed'] ?? 0.0);
     }
 
-    private function autoloadPath(): string
+    private function autoloadPath(string $sourcePath): string
     {
+        $directory = dirname($sourcePath);
+
+        while (true) {
+            $projectAutoload = $directory.'/vendor/autoload.php';
+
+            if (file_exists($projectAutoload)) {
+                return $projectAutoload;
+            }
+
+            $parentDirectory = dirname($directory);
+
+            if ($parentDirectory === $directory) {
+                break;
+            }
+
+            $directory = $parentDirectory;
+        }
+
         $workingDirectory = getcwd();
 
         if (is_string($workingDirectory)) {

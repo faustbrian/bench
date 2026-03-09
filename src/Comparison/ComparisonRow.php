@@ -23,6 +23,6 @@ final readonly class ComparisonRow
         public float $deltaPercentage,
         public float $referenceGap,
         public float $referenceGain,
-        public ?string $significance = null,
+        public ?SignificanceResult $significance = null,
     ) {}
 }

@@ -138,4 +138,61 @@ PHP);
             }
         }
     });
+
+    it('renders structured significance data in json comparison reports', function (): void {
+        $workingDirectory = sys_get_temp_dir().'/bench-report-json-'.bin2hex(random_bytes(8));
+        mkdir($workingDirectory, 0o755, true);
+        $previousDirectory = getcwd();
+
+        chdir($workingDirectory);
+
+        try {
+            $application = new BenchApplication();
+            $fixturePath = __DIR__.'/../../Fixtures/Benchmarks';
+
+            expect(
+                new CommandTester($application->find('snapshot:save'))->execute([
+                    'command' => 'snapshot:save',
+                    'name' => 'baseline',
+                    'path' => $fixturePath,
+                ]),
+            )->toBe(0);
+
+            $tester = new CommandTester($application->find('report'));
+
+            expect($tester->execute([
+                'command' => 'report',
+                'path' => $fixturePath,
+                '--format' => 'json',
+                '--against' => 'baseline',
+            ]))->toBe(0);
+
+            /**
+             * @var array{
+             *     comparisons: list<array{
+             *         significance: array{
+             *             status: string,
+             *             label: string,
+             *             p_value: null|float,
+             *             alpha: null|float,
+             *             minimum_samples: null|int
+             *         }
+             *     }>
+             * } $payload
+             */
+            $payload = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+
+            expect($payload['comparisons'][0]['significance'])->toHaveKeys([
+                'status',
+                'label',
+                'p_value',
+                'alpha',
+                'minimum_samples',
+            ]);
+        } finally {
+            if ($previousDirectory !== false) {
+                chdir($previousDirectory);
+            }
+        }
+    });
 });
