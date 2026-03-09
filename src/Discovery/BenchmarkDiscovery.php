@@ -18,7 +18,7 @@ use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
 use Cline\Bench\Enums\Metric;
@@ -109,7 +109,7 @@ final class BenchmarkDiscovery
         $scenario = $this->stringAttribute($reflectionClass, Scenario::class, 'name', $reflectionClass->getShortName());
         $competitor = $this->stringAttribute($reflectionClass, Competitor::class, 'name', $reflectionClass->getShortName());
         $classIterations = $this->intAttribute($reflectionClass, Iterations::class, 'count', $defaultIterations);
-        $classRevolutions = $this->intAttribute($reflectionClass, Revs::class, 'count', $defaultRevolutions);
+        $classRevolutions = $this->intAttribute($reflectionClass, Revolutions::class, 'count', $defaultRevolutions);
         $classWarmup = $this->intAttribute($reflectionClass, Warmup::class, 'count', $defaultWarmupIterations);
         $classBefore = $this->attributeList($reflectionClass, Before::class);
         $classAfter = $this->attributeList($reflectionClass, After::class);
@@ -136,7 +136,7 @@ final class BenchmarkDiscovery
                 scenario: $scenario,
                 competitor: $competitor,
                 iterations: $this->intAttribute($method, Iterations::class, 'count', $classIterations),
-                revolutions: $this->intAttribute($method, Revs::class, 'count', $classRevolutions),
+                revolutions: $this->intAttribute($method, Revolutions::class, 'count', $classRevolutions),
                 warmupIterations: $this->intAttribute($method, Warmup::class, 'count', $classWarmup),
                 beforeMethods: [...$classBefore, ...$this->attributeList($method, Before::class)],
                 afterMethods: [...$classAfter, ...$this->attributeList($method, After::class)],

@@ -57,7 +57,7 @@ namespace Benchmarks;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Iterations;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 
 use function strlen;
@@ -68,7 +68,7 @@ final class ExampleBench
 {
     #[Bench('string-length')]
     #[Iterations(5)]
-    #[Revs(1000)]
+    #[Revolutions(1000)]
     public function benchStringLength(): void
     {
         strlen('bench');

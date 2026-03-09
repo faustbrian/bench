@@ -12,7 +12,7 @@ namespace Tests\Fixtures\Benchmarks;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Iterations;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 
 use function hash;
@@ -27,7 +27,7 @@ final class TransformSpatieBench
 {
     #[Bench('transform')]
     #[Iterations(3)]
-    #[Revs(10)]
+    #[Revolutions(10)]
     public function benchTransform(): void
     {
         hash('xxh128', str_repeat('spatie', 8));

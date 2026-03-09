@@ -16,7 +16,7 @@ use Attribute;
  * @author Brian Faust <brian@cline.sh>
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
-final readonly class Revs
+final readonly class Revolutions
 {
     public function __construct(
         public int $count,

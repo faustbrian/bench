@@ -109,7 +109,7 @@ Class-level attributes:
 - `#[Competitor('name')]`
 - `#[Group(['a', 'b'])]`
 - `#[Iterations(n)]`
-- `#[Revs(n)]`
+- `#[Revolutions(n)]`
 - `#[Warmup(n)]`
 - `#[Before('method')]`
 - `#[After('method')]`
@@ -136,7 +136,7 @@ use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
 
@@ -144,7 +144,7 @@ use Cline\Bench\Attributes\Warmup;
 #[Competitor('struct')]
 #[Group(['dto', 'comparison'])]
 #[Iterations(5)]
-#[Revs(100)]
+#[Revolutions(100)]
 #[Warmup(1)]
 #[Before('setUpPayload')]
 final class TransformBench

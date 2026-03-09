@@ -16,7 +16,7 @@ use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
@@ -42,7 +42,7 @@ final class ParameterizedBench
 
     #[Bench('transform-payload')]
     #[Iterations(1)]
-    #[Revs(1)]
+    #[Revolutions(1)]
     #[Params([
         ['size' => 'small', 'multiplier' => 10],
         ['size' => 'large', 'multiplier' => 100],

@@ -16,7 +16,7 @@ use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
 use Cline\Bench\Enums\AssertionOperator;
@@ -37,7 +37,7 @@ describe('Attributes', function (): void {
             new Iterations(5)->count,
         )->toBe(5);
         expect(
-            new Revs(10)->count,
+            new Revolutions(10)->count,
         )->toBe(10);
         expect(
             new Warmup(2)->count,

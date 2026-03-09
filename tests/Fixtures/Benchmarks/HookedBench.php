@@ -14,7 +14,7 @@ use Cline\Bench\Attributes\Before;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Iterations;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
 
@@ -41,7 +41,7 @@ final class HookedBench
     #[Bench('hooked')]
     #[Warmup(1)]
     #[Iterations(2)]
-    #[Revs(2)]
+    #[Revolutions(2)]
     #[Before(['beforeRun'])]
     #[After(['afterRun'])]
     public function benchHooked(): void

@@ -14,7 +14,7 @@ use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Enums\Metric;
 use Tests\Fixtures\BalooBenchmarks\Support\BalooBenchCase;
@@ -29,7 +29,7 @@ final class StructProfileBench extends BalooBenchCase
 {
     #[Bench('profile-collection-transformation')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     #[Regression(metric: Metric::Median, tolerance: '5%')]
     public function benchProfileCollectionTransformation(): void
     {
@@ -38,7 +38,7 @@ final class StructProfileBench extends BalooBenchCase
 
     #[Bench('profile-object-transformation')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchProfileObjectTransformation(): void
     {
         $this->structTransform(profile: true, cached: true);
@@ -46,7 +46,7 @@ final class StructProfileBench extends BalooBenchCase
 
     #[Bench('profile-collection-creation')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     public function benchProfileCollectionCreation(): void
     {
         $this->structCreate(profile: true, cached: true);
@@ -54,7 +54,7 @@ final class StructProfileBench extends BalooBenchCase
 
     #[Bench('profile-object-creation')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchProfileObjectCreation(): void
     {
         $this->structCreate(profile: true, cached: true);

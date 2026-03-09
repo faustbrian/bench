@@ -15,7 +15,7 @@ use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Group;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Regression;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
@@ -31,7 +31,7 @@ final class StructDataBench extends BalooBenchCase
 {
     #[Bench('collection-transformation')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     #[Regression(metric: Metric::Median, tolerance: '5%')]
     #[Assert(Metric::Median, AssertionOperator::LessThan, 1_000_000.0)]
     public function benchCollectionTransformation(): void
@@ -41,7 +41,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('object-transformation')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchObjectTransformation(): void
     {
         $this->structTransform(profile: false, cached: true);
@@ -49,7 +49,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('collection-creation')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     public function benchCollectionCreation(): void
     {
         $this->structCreate(profile: false, cached: true);
@@ -57,7 +57,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('object-creation')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchObjectCreation(): void
     {
         $this->structCreate(profile: false, cached: true);
@@ -65,7 +65,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('collection-transformation-without-cache')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     public function benchCollectionTransformationWithoutCache(): void
     {
         $this->structTransform(profile: false, cached: false);
@@ -73,7 +73,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('object-transformation-without-cache')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchObjectTransformationWithoutCache(): void
     {
         $this->structTransform(profile: false, cached: false);
@@ -81,7 +81,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('collection-creation-without-cache')]
     #[Iterations(3)]
-    #[Revs(120)]
+    #[Revolutions(120)]
     public function benchCollectionCreationWithoutCache(): void
     {
         $this->structCreate(profile: false, cached: false);
@@ -89,7 +89,7 @@ final class StructDataBench extends BalooBenchCase
 
     #[Bench('object-creation-without-cache')]
     #[Iterations(3)]
-    #[Revs(240)]
+    #[Revolutions(240)]
     public function benchObjectCreationWithoutCache(): void
     {
         $this->structCreate(profile: false, cached: false);

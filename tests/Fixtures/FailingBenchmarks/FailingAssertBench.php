@@ -12,7 +12,7 @@ namespace Tests\Fixtures\FailingBenchmarks;
 use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Iterations;
-use Cline\Bench\Attributes\Revs;
+use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
 use RuntimeException;
@@ -26,7 +26,7 @@ final class FailingAssertBench
 {
     #[Bench('failing-assertion')]
     #[Iterations(1)]
-    #[Revs(1)]
+    #[Revolutions(1)]
     #[Assert(Metric::Median, AssertionOperator::LessThan, 0.0)]
     public function benchFailingAssertion(): void
     {
