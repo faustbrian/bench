@@ -7,6 +7,11 @@ Current schema version:
 
 - `1`
 
+Machine-readable schema files:
+
+- [`json-schema/run-v1.schema.json`](json-schema/run-v1.schema.json)
+- [`json-schema/comparison-v1.schema.json`](json-schema/comparison-v1.schema.json)
+
 ## Top-Level Documents
 
 ### Run Report

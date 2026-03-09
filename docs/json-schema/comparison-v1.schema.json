@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cline.sh/bench/schema/comparison-v1.schema.json",
+  "title": "bench comparison report v1",
+  "type": "object",
+  "required": ["results", "comparisons", "reference", "metadata"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/benchmarkResult"
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/referenceComparisonRow"
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/benchmarkResult"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "$ref": "#/$defs/comparisonMetadata"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "environment": {
+      "type": "object",
+      "required": [
+        "php_version",
+        "php_sapi",
+        "os_family",
+        "architecture",
+        "extensions"
+      ],
+      "properties": {
+        "php_version": {
+          "type": "string"
+        },
+        "php_sapi": {
+          "type": "string"
+        },
+        "os_family": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "process_isolation": {
+          "type": "boolean"
+        },
+        "default_iterations": {
+          "type": "integer"
+        },
+        "default_revolutions": {
+          "type": "integer"
+        },
+        "default_warmup_iterations": {
+          "type": "integer"
+        },
+        "significance_enabled": {
+          "type": "boolean"
+        },
+        "significance_alpha": {
+          "type": "number"
+        },
+        "significance_minimum_samples": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    },
+    "selection": {
+      "type": "object",
+      "required": ["filter", "groups", "competitors"],
+      "properties": {
+        "filter": {
+          "type": ["string", "null"]
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "competitors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "policy": {
+      "type": "object",
+      "required": ["passed", "violations"],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "samples",
+        "min",
+        "max",
+        "mean",
+        "median",
+        "standard_deviation",
+        "relative_margin_of_error",
+        "percentile75",
+        "percentile95",
+        "percentile99",
+        "operations_per_second"
+      ],
+      "properties": {
+        "samples": {
+          "type": "integer"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "mean": {
+          "type": "number"
+        },
+        "median": {
+          "type": "number"
+        },
+        "standard_deviation": {
+          "type": "number"
+        },
+        "relative_margin_of_error": {
+          "type": "number"
+        },
+        "percentile75": {
+          "type": "number"
+        },
+        "percentile95": {
+          "type": "number"
+        },
+        "percentile99": {
+          "type": "number"
+        },
+        "operations_per_second": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    },
+    "threshold": {
+      "type": "object",
+      "required": ["metric", "operator", "expected", "actual", "passed"],
+      "properties": {
+        "metric": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "number"
+        },
+        "actual": {
+          "type": "number"
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "regression": {
+      "type": "object",
+      "required": ["metric", "tolerance"],
+      "properties": {
+        "metric": {
+          "type": ["string", "null"]
+        },
+        "tolerance": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "significance": {
+      "type": "object",
+      "required": ["status", "label", "p_value", "alpha", "minimum_samples"],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "p_value": {
+          "type": ["number", "null"]
+        },
+        "alpha": {
+          "type": ["number", "null"]
+        },
+        "minimum_samples": {
+          "type": ["integer", "null"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "benchmarkResult": {
+      "type": "object",
+      "required": [
+        "subject",
+        "scenario",
+        "competitor",
+        "summary",
+        "samples",
+        "parameters",
+        "case_label",
+        "parameter_label",
+        "groups",
+        "thresholds",
+        "regression"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "scenario": {
+          "type": "string"
+        },
+        "competitor": {
+          "type": "string"
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "case_label": {
+          "type": ["string", "null"]
+        },
+        "parameter_label": {
+          "type": "string"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/threshold"
+          }
+        },
+        "regression": {
+          "$ref": "#/$defs/regression"
+        }
+      },
+      "additionalProperties": true
+    },
+    "referenceComparisonRow": {
+      "type": "object",
+      "required": [
+        "scenario",
+        "subject",
+        "competitor",
+        "parameter_label",
+        "current_median",
+        "reference_median",
+        "delta_percentage",
+        "winner",
+        "reference_gap",
+        "reference_gain",
+        "significance",
+        "significance_label",
+        "regression_label"
+      ],
+      "properties": {
+        "scenario": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "competitor": {
+          "type": "string"
+        },
+        "parameter_label": {
+          "type": "string"
+        },
+        "current_median": {
+          "type": "number"
+        },
+        "reference_median": {
+          "type": "number"
+        },
+        "delta_percentage": {
+          "type": "number"
+        },
+        "winner": {
+          "type": "string"
+        },
+        "reference_gap": {
+          "type": "number"
+        },
+        "reference_gain": {
+          "type": "number"
+        },
+        "significance": {
+          "$ref": "#/$defs/significance"
+        },
+        "significance_label": {
+          "type": "string"
+        },
+        "regression_label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "nestedMetadata": {
+      "type": "object",
+      "properties": {
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "settings": {
+          "$ref": "#/$defs/settings"
+        },
+        "selection": {
+          "$ref": "#/$defs/selection"
+        }
+      },
+      "additionalProperties": true
+    },
+    "comparisonMetadata": {
+      "type": "object",
+      "required": ["schema_version", "report_type", "generated_at"],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "report_type": {
+          "const": "comparison"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "selection": {
+          "$ref": "#/$defs/selection"
+        },
+        "current": {
+          "$ref": "#/$defs/nestedMetadata"
+        },
+        "reference": {
+          "type": "object"
+        },
+        "reference_name": {
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/policy"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
