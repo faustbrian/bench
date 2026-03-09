@@ -929,11 +929,11 @@ trait FormatsResults
         $headers[] = 'Winner';
 
         if ($this->comparisonReference() === ComparisonReference::Slowest) {
-            $headers[] = 'Field Spread';
-            $headers[] = 'Fastest Gain';
+            $headers[] = 'Slowest Reference Gap';
+            $headers[] = 'Slowest Reference Gain';
         } else {
-            $headers[] = 'Closest Gap';
-            $headers[] = 'Closest Gain';
+            $headers[] = 'Closest Reference Gap';
+            $headers[] = 'Closest Reference Gain';
         }
 
         foreach ($competitors as $competitor) {

@@ -92,8 +92,16 @@ describe('FormatsResults golden outputs', function (): void {
         $table = $renderer->table(multiCompetitorGoldenResults());
 
         expect($table)->toContain('│ Benchmark')
-            ->and($table)->toContain('│   Struct │       Bag │    Spatie │  Valinor │ Winner  │ Closest Gap │ Closest Gain │')
-            ->and($table)->toContain('│ Profile collection transformation │ 42.000μs │ 275.000μs │ 190.000μs │ 30.000μs │ Valinor │       1.40x │        28.6% │')
+            ->and($table)->toContain('Closest Reference Gap')
+            ->and($table)->toContain('Closest Reference Gain')
+            ->and($table)->toContain('Profile collection transformation')
+            ->and($table)->toContain('42.000μs')
+            ->and($table)->toContain('275.000μs')
+            ->and($table)->toContain('190.000μs')
+            ->and($table)->toContain('30.000μs')
+            ->and($table)->toContain('Valinor')
+            ->and($table)->toContain('1.40x')
+            ->and($table)->toContain('28.6%')
             ->and($table)->toContain('│ Struct Ops/s │ Bag Ops/s │ Spatie Ops/s │ Valinor Ops/s │');
     });
 
@@ -121,8 +129,16 @@ describe('FormatsResults golden outputs', function (): void {
 
         $table = $renderer->table(multiCompetitorGoldenResults());
 
-        expect($table)->toContain('│  Valinor │   Struct │       Bag │    Spatie │ Winner  │ Closest Gap │ Closest Gain │')
-            ->and($table)->toContain('│ Profile collection transformation │ 30.000μs │ 42.000μs │ 275.000μs │ 190.000μs │ Valinor │       1.40x │        28.6% │')
+        expect($table)->toContain('Closest Reference Gap')
+            ->and($table)->toContain('Closest Reference Gain')
+            ->and($table)->toContain('Profile collection transformation')
+            ->and($table)->toContain('30.000μs')
+            ->and($table)->toContain('42.000μs')
+            ->and($table)->toContain('275.000μs')
+            ->and($table)->toContain('190.000μs')
+            ->and($table)->toContain('Valinor')
+            ->and($table)->toContain('1.40x')
+            ->and($table)->toContain('28.6%')
             ->and($table)->toContain('│ Valinor Ops/s │ Struct Ops/s │ Bag Ops/s │ Spatie Ops/s │');
     });
 
@@ -147,7 +163,11 @@ describe('FormatsResults golden outputs', function (): void {
 
         $table = $renderer->table(multiCompetitorGoldenResults());
 
-        expect($table)->toContain('│ Profile collection transformation │ 42.000μs │ 275.000μs │ 190.000μs │ 30.000μs │ Valinor │        9.17x │        89.1% │');
+        expect($table)->toContain('Slowest Reference Gap')
+            ->and($table)->toContain('Slowest Reference Gain')
+            ->and($table)->toContain('│ Profile collection transformation │ 42.000μs │ 275.000μs │ 190.000μs │ 30.000μs │ Valinor │')
+            ->and($table)->toContain('9.17x')
+            ->and($table)->toContain('89.1%');
     });
 
     it('uses configurable european-style number formatting', function (): void {

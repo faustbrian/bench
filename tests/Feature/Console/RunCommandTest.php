@@ -24,6 +24,25 @@ describe('bench run', function (): void {
 
         expect($statusCode)->toBe(0);
 
+        /**
+         * @var array{
+         *     results: list<array{
+         *         summary: array<string, mixed>,
+         *         parameters: array<string, mixed>,
+         *         groups: list<string>,
+         *         assertions: list<mixed>,
+         *         regression: array<string, mixed>
+         *     }>,
+         *     comparison: array{rows: list<array<string, mixed>>},
+         *     metadata: array{
+         *         schema_version: int,
+         *         report_type: string,
+         *         generated_at: string,
+         *         environment: array<string, mixed>,
+         *         selection: array<string, mixed>
+         *     }
+         * } $payload
+         */
         $payload = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
 
         expect($payload)->toHaveKeys(['results', 'comparison', 'metadata'])
@@ -35,7 +54,7 @@ describe('bench run', function (): void {
                 'selection',
             ])
             ->and($payload['metadata']['report_type'])->toBe('run')
-            ->and($payload['results'])->toHaveCount(10)
+            ->and($payload['results'])->toHaveCount(12)
             ->and($payload['results'][0]['summary'])->toHaveKeys([
                 'median',
                 'percentile95',
@@ -68,6 +87,21 @@ describe('bench run', function (): void {
             '--filter' => 'transform',
         ]))->toBe(0);
 
+        /**
+         * @var array{
+         *     results: list<array{
+         *         competitor: string,
+         *         scenario: string
+         *     }>,
+         *     metadata: array{
+         *         selection: array{
+         *             filter: null|string,
+         *             groups: list<string>,
+         *             competitors: list<string>
+         *         }
+         *     }
+         * } $payload
+         */
         $payload = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
 
         expect($payload['results'])->toHaveCount(2)
@@ -107,7 +141,7 @@ PHP);
                 ->and($tester->getDisplay())->toContain('## Comparison')
                 ->and($tester->getDisplay())->toContain('### Dto transform')
                 ->and($tester->getDisplay())->toContain('| Benchmark |')
-                ->and($tester->getDisplay())->toContain('| Winner | Closest Gap | Closest Gain |');
+                ->and($tester->getDisplay())->toContain('| Winner | Closest Reference Gap | Closest Reference Gain |');
         } finally {
             if ($previousDirectory !== false) {
                 chdir($previousDirectory);
@@ -216,9 +250,9 @@ PHP);
             ->and($tester->getDisplay())->toContain(' ops/s')
             ->and($tester->getDisplay())->not->toContain('------------------')
             ->and($tester->getDisplay())->toContain('Winner')
-            ->and($tester->getDisplay())->toContain('Closest Gap')
-            ->and($tester->getDisplay())->toContain('Closest Gain')
-            ->and($tester->getDisplay())->toContain('Geometric mean spread')
+            ->and($tester->getDisplay())->toContain('Closest Reference Gap')
+            ->and($tester->getDisplay())->toContain('Closest Reference Gain')
+            ->and($tester->getDisplay())->toContain('Geometric mean reference gap')
             ->and($tester->getDisplay())->toContain('average gap')
             ->and($tester->getDisplay())->toContain('slower than fastest')
             ->and($tester->getDisplay())->not->toContain('Legend: lower time is better')
@@ -347,10 +381,10 @@ PHP);
                 'path' => __DIR__.'/../../Fixtures/BalooBenchmarks',
                 '--no-progress' => true,
             ]))->toBe(0)
-                ->and($tester->getDisplay())->toContain('Field Spread')
-                ->and($tester->getDisplay())->toContain('Fastest Gain')
-                ->and($tester->getDisplay())->not->toContain('Closest Gap')
-                ->and($tester->getDisplay())->not->toContain('Closest Gain');
+                ->and($tester->getDisplay())->toContain('Slowest Reference Gap')
+                ->and($tester->getDisplay())->toContain('Slowest Reference Gain')
+                ->and($tester->getDisplay())->not->toContain('Closest Reference Gap')
+                ->and($tester->getDisplay())->not->toContain('Closest Reference Gain');
         } finally {
             if ($previousDirectory !== false) {
                 chdir($previousDirectory);

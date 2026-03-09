@@ -1,7 +1,7 @@
 ## Comparison
 
 ### Baloo data
-| Benchmark | Struct | Spatie | Winner | Closest Gap | Closest Gain | Struct Ops/s | Spatie Ops/s |
+| Benchmark | Struct | Spatie | Winner | Closest Reference Gap | Closest Reference Gain | Struct Ops/s | Spatie Ops/s |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: |
 | Collection transformation | 100.000ns | 120.000ns | Struct | 1.20x | 16.7% | 10,000,000/s | 8,333,333/s |
 

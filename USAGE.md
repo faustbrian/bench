@@ -443,10 +443,10 @@ When a suite contains multiple competitors under the same scenario,
 
 - side-by-side durations per competitor
 - winner
-- closest gap or slowest gap, depending on config
-- closest gain percentage or slowest gain percentage
+- closest reference gap or slowest reference gap, depending on config
+- closest reference gain percentage or slowest reference gain percentage
 - per-competitor `ops/s`
-- overall wins and geometric mean spread
+- overall wins and geometric mean reference gap
 
 ### Markdown
 
@@ -479,9 +479,12 @@ fastest competitor in each row and a configured reference competitor.
 Key fields:
 
 - `Winner`: fastest competitor for that benchmark row
-- `Closest Gap`: fastest competitor versus the next-fastest competitor
-- `Closest Gain`: percentage lead of the fastest competitor over the
+- `Closest Reference Gap`: fastest competitor versus the next-fastest competitor
+- `Closest Reference Gain`: percentage lead of the fastest competitor over the
   next-fastest competitor
+- `Slowest Reference Gap`: fastest competitor versus the slowest competitor
+- `Slowest Reference Gain`: percentage lead of the fastest competitor over the
+  slowest competitor
 - per-competitor `Ops/s`: throughput for each displayed competitor
 
 If `withComparisonReference(ComparisonReference::Slowest)` is configured, the summary gap
@@ -732,7 +735,7 @@ The runtime model is:
 - expand parameter sets into concrete benchmark cases
 - apply class and method metadata
 - optionally warm up the case
-- optionally calibrate revs upward to hit the configured budget
+- optionally calibrate revolutions upward to hit the configured budget
 - run each measured iteration
 - optionally isolate each sample in a fresh child process
 - compute derived statistics from raw samples

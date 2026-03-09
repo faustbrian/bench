@@ -62,7 +62,7 @@ describe('snapshot commands', function (): void {
                 ->and($markdownRunTester->getDisplay())->toContain('## Comparison')
                 ->and($markdownRunTester->getDisplay())->toContain('### Dto transform')
                 ->and($markdownRunTester->getDisplay())->toContain('| Benchmark |')
-                ->and($markdownRunTester->getDisplay())->toContain('| Winner | Closest Gap | Closest Gain |');
+                ->and($markdownRunTester->getDisplay())->toContain('| Winner | Closest Reference Gap | Closest Reference Gain |');
         } finally {
             if ($previousDirectory !== false) {
                 chdir($previousDirectory);

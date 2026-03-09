@@ -27,3 +27,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including alpha, minimum sample size, and disabling significance
 - Remaining docs and tests now use `revolutions` and `reference gap`
   terminology consistently
+- The packaged `bin/bench` entrypoint now resolves Composer autoloading
+  correctly from installed `vendor/cline/bench` paths

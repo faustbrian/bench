@@ -78,7 +78,7 @@ describe('BenchmarkRunner', function (): void {
             ->and(CaseLabeledBench::$sizes)->toBe(['small', 'large']);
     });
 
-    it('uses config defaults for iterations revs and warmup', function (): void {
+    it('uses config defaults for iterations revolutions and warmup', function (): void {
         DefaultConfiguredHookedBench::reset();
 
         $results = new BenchmarkRunner()->runPath(
