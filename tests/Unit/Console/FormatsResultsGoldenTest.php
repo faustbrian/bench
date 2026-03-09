@@ -9,6 +9,7 @@
 
 use Cline\Bench\Console\Concerns\FormatsResults;
 use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\AssertionResult;
 use Cline\Bench\Execution\BenchmarkResult;
@@ -20,11 +21,17 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function table(array $results): string
             {
                 return $this->asTable($results);
             }
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function markdown(array $results): string
             {
                 return $this->asMarkdown($results);
@@ -42,11 +49,19 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             * @param list<BenchmarkResult> $baseline
+             */
             public function table(array $results, array $baseline): string
             {
                 return $this->asComparisonTable($results, $baseline);
             }
 
+            /**
+             * @param list<BenchmarkResult> $results
+             * @param list<BenchmarkResult> $baseline
+             */
             public function markdown(array $results, array $baseline): string
             {
                 return $this->asComparisonMarkdown($results, $baseline);
@@ -65,6 +80,9 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function table(array $results): string
             {
                 return $this->asTable($results);
@@ -84,11 +102,17 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function table(array $results): string
             {
                 return $this->asTable($results);
             }
 
+            /**
+             * @return list<string>
+             */
             protected function preferredCompetitors(): array
             {
                 return ['valinor', 'struct'];
@@ -107,14 +131,17 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function table(array $results): string
             {
                 return $this->asTable($results);
             }
 
-            protected function comparisonReference(): string
+            protected function comparisonReference(): ComparisonReference
             {
-                return 'slowest';
+                return ComparisonReference::Slowest;
             }
         };
 
@@ -128,6 +155,9 @@ describe('FormatsResults golden outputs', function (): void {
         {
             use FormatsResults;
 
+            /**
+             * @param list<BenchmarkResult> $results
+             */
             public function table(array $results): string
             {
                 return $this->asTable($results);

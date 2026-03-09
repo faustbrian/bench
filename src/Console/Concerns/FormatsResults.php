@@ -12,6 +12,7 @@ namespace Cline\Bench\Console\Concerns;
 use Cline\Bench\Comparison\ComparisonEngine;
 use Cline\Bench\Comparison\ComparisonRow;
 use Cline\Bench\Comparison\SignificanceCalculator;
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Snapshot\RegressionEvaluator;
@@ -73,9 +74,9 @@ trait FormatsResults
         return [];
     }
 
-    protected function comparisonReference(): string
+    protected function comparisonReference(): ComparisonReference
     {
-        return 'closest';
+        return ComparisonReference::Closest;
     }
 
     protected function decimalSeparator(): string
@@ -261,8 +262,8 @@ trait FormatsResults
             'baseline_median',
             'delta_percentage',
             'winner',
-            'ratio',
-            'percent_faster',
+            'reference_gap',
+            'reference_gain',
             'significance',
             'regression',
         ]];
@@ -277,8 +278,8 @@ trait FormatsResults
                 $this->formatNumber((float) $row['baseline_median']),
                 $this->formatSignedPercentage((float) $row['delta_percentage']),
                 (string) $row['winner'],
-                $this->formatRatio((float) $row['ratio']),
-                $this->formatPercentage((float) $row['percent_faster']),
+                $this->formatRatio((float) $row['reference_gap']),
+                $this->formatPercentage((float) $row['reference_gain']),
                 $this->formatSignificance((string) $row['significance']),
                 (string) $row['regression_label'],
             ];
@@ -304,7 +305,7 @@ trait FormatsResults
         }
 
         $lines = [
-            '| Scenario | Subject | Competitor | Parameters | Groups | Median (ns) | p95 (ns) | p99 (ns) | ops/s | Winner | Ratio | % Faster | Assertions |',
+            '| Scenario | Subject | Competitor | Parameters | Groups | Median (ns) | p95 (ns) | p99 (ns) | ops/s | Winner | Reference Gap | Reference Gain | Assertions |',
             '| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |',
         ];
 
@@ -323,8 +324,8 @@ trait FormatsResults
                 $result->summary->percentile99,
                 $result->summary->operationsPerSecond,
                 $comparison->winner,
-                $this->formatRatio($comparison->speedRatio),
-                $this->formatPercentage($comparison->percentFaster),
+                $this->formatRatio($comparison->referenceGap),
+                $this->formatPercentage($comparison->referenceGain),
                 $this->assertionSummary($result),
             );
         }
@@ -340,7 +341,7 @@ trait FormatsResults
     private function asComparisonMarkdown(array $results, array $baseline, array $metadata = []): string
     {
         $lines = [
-            '| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Ratio | % Faster | Significance | Regression |',
+            '| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |',
             '| --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- | --- |',
         ];
 
@@ -355,8 +356,8 @@ trait FormatsResults
                 $row['baseline_median'],
                 $row['delta_percentage'],
                 $row['winner'],
-                $this->formatRatio((float) $row['ratio']),
-                $this->formatPercentage((float) $row['percent_faster']),
+                $this->formatRatio((float) $row['reference_gap']),
+                $this->formatPercentage((float) $row['reference_gain']),
                 $this->formatSignificance((string) $row['significance']),
                 $row['regression_label'],
             );
@@ -396,16 +397,16 @@ trait FormatsResults
                 $this->formatNumber($result->summary->percentile99),
                 $this->formatNumber($result->summary->operationsPerSecond),
                 $comparison->winner,
-                $this->formatRatio($comparison->speedRatio),
-                $this->formatPercentage($comparison->percentFaster),
+                $this->formatRatio($comparison->referenceGap),
+                $this->formatPercentage($comparison->referenceGain),
                 $this->assertionSummary($result),
             );
         }
 
         return $this->prependPlainMetadata($this->renderConsoleTable(
-            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Winner', 'Ratio', '% Faster', 'Assertions'],
+            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Winner', 'Reference Gap', 'Reference Gain', 'Assertions'],
             rows: $rows,
-            rightAlignedHeaders: ['Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Ratio', '% Faster'],
+            rightAlignedHeaders: ['Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Reference Gap', 'Reference Gain'],
         ), $metadata);
     }
 
@@ -428,17 +429,17 @@ trait FormatsResults
                 $this->formatNumber((float) $row['baseline_median']),
                 $this->formatSignedPercentage((float) $row['delta_percentage']),
                 (string) $row['winner'],
-                $this->formatRatio((float) $row['ratio']),
-                $this->formatPercentage((float) $row['percent_faster']),
+                $this->formatRatio((float) $row['reference_gap']),
+                $this->formatPercentage((float) $row['reference_gain']),
                 $this->formatSignificance((string) $row['significance']),
                 (string) $row['regression_label'],
             );
         }
 
         return $this->prependPlainMetadata($this->renderConsoleTable(
-            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Current (ns)', 'Baseline (ns)', 'Delta %', 'Winner', 'Ratio', '% Faster', 'Significance', 'Regression'],
+            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Current (ns)', 'Baseline (ns)', 'Delta %', 'Winner', 'Reference Gap', 'Reference Gain', 'Significance', 'Regression'],
             rows: $rows,
-            rightAlignedHeaders: ['Current (ns)', 'Baseline (ns)', 'Delta %', 'Ratio', '% Faster'],
+            rightAlignedHeaders: ['Current (ns)', 'Baseline (ns)', 'Delta %', 'Reference Gap', 'Reference Gain'],
         ), $metadata);
     }
 
@@ -590,13 +591,13 @@ trait FormatsResults
                     'parameters' => $row->result->parameters,
                     'winner' => $row->winner,
                     'delta_percentage' => $row->deltaPercentage,
-                    'reference_gap' => $row->speedRatio,
-                    'reference_gain' => $row->percentFaster,
+                    'reference_gap' => $row->referenceGap,
+                    'reference_gain' => $row->referenceGain,
                     'significance' => $this->formatSignificance($row->significance ?? 'n/a'),
                 ],
                 $comparison->rows,
             ),
-            'geometric_mean_reference_gap' => $comparison->geometricMeanSpeedRatio,
+            'geometric_mean_reference_gap' => $comparison->geometricMeanReferenceGap,
         ];
     }
 
@@ -642,8 +643,8 @@ trait FormatsResults
                 'baseline_median' => $baselineResult->summary->median,
                 'delta_percentage' => $decision->deltaPercentage,
                 'winner' => $this->baselineWinner($result, $baselineResult),
-                'ratio' => $this->baselineRatio($result, $baselineResult),
-                'percent_faster' => $this->baselinePercentFaster($result, $baselineResult),
+                'reference_gap' => $this->baselineRatio($result, $baselineResult),
+                'reference_gain' => $this->baselinePercentFaster($result, $baselineResult),
                 'significance' => $this->formatSignificance($significance->compare($baselineResult->samples, $result->samples)),
                 'regression_label' => sprintf('%s @ %s', $metric->value, $tolerance),
             ];
@@ -897,7 +898,7 @@ trait FormatsResults
 
         $headers[] = 'Winner';
 
-        if ($this->comparisonReference() === 'slowest') {
+        if ($this->comparisonReference() === ComparisonReference::Slowest) {
             $headers[] = 'Field Spread';
             $headers[] = 'Fastest Gain';
         } else {
@@ -967,7 +968,7 @@ trait FormatsResults
      */
     private function comparisonReferenceResult(array $results): BenchmarkResult
     {
-        if ($this->comparisonReference() === 'slowest' || count($results) === 2) {
+        if ($this->comparisonReference() === ComparisonReference::Slowest || count($results) === 2) {
             return $results[count($results) - 1];
         }
 

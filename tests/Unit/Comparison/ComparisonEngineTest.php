@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Comparison\ComparisonEngine;
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Execution\BenchmarkResult;
 use Cline\Bench\Statistics\SummaryStatistics;
 
@@ -63,10 +64,10 @@ describe('ComparisonEngine', function (): void {
             ->and($report->rows[1]->winner)->toBe('bench')
             ->and(abs($report->rows[1]->deltaPercentage - 20.0))->toBeLessThan(0.001)
             ->and($report->rows[1]->significance)->toContain('p=')
-            ->and(abs($report->geometricMeanSpeedRatio - 1.2))->toBeLessThan(0.001);
+            ->and(abs($report->geometricMeanReferenceGap - 1.2))->toBeLessThan(0.001);
     });
 
-    it('defaults geometric mean spread to the closest competitor gap', function (): void {
+    it('defaults geometric mean reference gap to the closest competitor gap', function (): void {
         $engine = new ComparisonEngine();
 
         $report = $engine->compare([
@@ -75,19 +76,19 @@ describe('ComparisonEngine', function (): void {
             benchmarkResult('bag', 300_000.0, 3_333.333),
         ]);
 
-        expect(abs($report->geometricMeanSpeedRatio - 1.2))->toBeLessThan(0.001);
+        expect(abs($report->geometricMeanReferenceGap - 1.2))->toBeLessThan(0.001);
     });
 
-    it('can use the slowest competitor gap for geometric mean spread', function (): void {
+    it('can use the slowest competitor gap for geometric mean reference gap', function (): void {
         $engine = new ComparisonEngine();
 
         $report = $engine->compare([
             benchmarkResult('struct', 100_000.0, 10_000.0),
             benchmarkResult('spatie-data', 120_000.0, 8_333.333),
             benchmarkResult('bag', 300_000.0, 3_333.333),
-        ], 'slowest');
+        ], ComparisonReference::Slowest);
 
-        expect(abs($report->geometricMeanSpeedRatio - 3.0))->toBeLessThan(0.001);
+        expect(abs($report->geometricMeanReferenceGap - 3.0))->toBeLessThan(0.001);
     });
 });
 

@@ -39,11 +39,11 @@ describe('bench report', function (): void {
             ]);
 
             expect($statusCode)->toBe(0)
-                ->and($tester->getDisplay())->toContain('| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Ratio | % Faster | Significance | Regression |')
+                ->and($tester->getDisplay())->toContain('| Scenario | Subject | Competitor | Parameters | Current Median (ns) | Baseline Median (ns) | Delta % | Winner | Reference Gap | Reference Gain | Significance | Regression |')
                 ->and($tester->getDisplay())->toContain('| dto-transform | transform | Bench |')
                 ->and($tester->getDisplay())->toContain('| dto-transform | transform | Spatie data |')
                 ->and($tester->getDisplay())->toContain('Winner')
-                ->and($tester->getDisplay())->toContain('Ratio')
+                ->and($tester->getDisplay())->toContain('Reference Gap')
                 ->and($tester->getDisplay())->toContain('Significance');
         } finally {
             if ($previousDirectory !== false) {

@@ -219,9 +219,9 @@ final class CompareCommand extends Command
         return $this->competitorAliases;
     }
 
-    protected function comparisonReference(): string
+    protected function comparisonReference(): ComparisonReference
     {
-        return $this->comparisonReference->value;
+        return $this->comparisonReference;
     }
 
     protected function decimalSeparator(): string

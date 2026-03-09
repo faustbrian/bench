@@ -21,8 +21,8 @@ final readonly class ComparisonRow
         public BenchmarkResult $result,
         public string $winner,
         public float $deltaPercentage,
-        public float $speedRatio,
-        public float $percentFaster,
+        public float $referenceGap,
+        public float $referenceGain,
         public ?string $significance = null,
     ) {}
 }

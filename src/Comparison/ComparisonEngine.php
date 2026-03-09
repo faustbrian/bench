@@ -9,6 +9,7 @@
 
 namespace Cline\Bench\Comparison;
 
+use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Execution\BenchmarkResult;
 
 use function array_last;
@@ -29,8 +30,10 @@ final readonly class ComparisonEngine
     /**
      * @param list<BenchmarkResult> $results
      */
-    public function compare(array $results, string $comparisonReference = 'closest'): ComparisonReport
-    {
+    public function compare(
+        array $results,
+        ComparisonReference $comparisonReference = ComparisonReference::Closest,
+    ): ComparisonReport {
         $grouped = [];
 
         foreach ($results as $result) {
@@ -54,8 +57,8 @@ final readonly class ComparisonEngine
 
                     foreach ($parameterResults as $result) {
                         $delta = (($result->summary->median - $fastest->summary->median) / $fastest->summary->median) * 100;
-                        $speedRatio = $result->summary->median / max($fastest->summary->median, 1.0);
-                        $percentFaster = $result === $fastest
+                        $referenceGap = $result->summary->median / max($fastest->summary->median, 1.0);
+                        $referenceGain = $result === $fastest
                             ? 0.0
                             : (($result->summary->median - $fastest->summary->median) / $result->summary->median) * 100;
 
@@ -63,8 +66,8 @@ final readonly class ComparisonEngine
                             result: $result,
                             winner: $fastest->competitor,
                             deltaPercentage: max(0.0, $delta),
-                            speedRatio: max(1.0, $speedRatio),
-                            percentFaster: max(0.0, $percentFaster),
+                            referenceGap: max(1.0, $referenceGap),
+                            referenceGain: max(0.0, $referenceGain),
                             significance: $result === $fastest
                                 ? 'winner'
                                 : $this->significance->compare($fastest->samples, $result->samples),
@@ -76,20 +79,20 @@ final readonly class ComparisonEngine
 
         return new ComparisonReport(
             rows: $rows,
-            geometricMeanSpeedRatio: $this->geometricMean($ratios),
+            geometricMeanReferenceGap: $this->geometricMean($ratios),
         );
     }
 
     /**
      * @param list<BenchmarkResult> $parameterResults
      */
-    private function referenceResult(array $parameterResults, string $comparisonReference): BenchmarkResult
+    private function referenceResult(array $parameterResults, ComparisonReference $comparisonReference): BenchmarkResult
     {
         if (count($parameterResults) < 2) {
             return $parameterResults[0];
         }
 
-        if ($comparisonReference === 'slowest' || count($parameterResults) === 2) {
+        if ($comparisonReference === ComparisonReference::Slowest || count($parameterResults) === 2) {
             return array_last($parameterResults);
         }
 

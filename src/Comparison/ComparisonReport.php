@@ -20,6 +20,6 @@ final readonly class ComparisonReport
      */
     public function __construct(
         public array $rows,
-        public float $geometricMeanSpeedRatio,
+        public float $geometricMeanReferenceGap,
     ) {}
 }
