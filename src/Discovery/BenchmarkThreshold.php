@@ -7,22 +7,20 @@
  * file that was distributed with this source code.
  */
 
-namespace Cline\Bench\Attributes;
+namespace Cline\Bench\Discovery;
 
-use Attribute;
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 
 /**
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
  */
-#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-final readonly class Assert
+final readonly class BenchmarkThreshold
 {
     public function __construct(
         public Metric $metric,
-        public AssertionOperator $operator,
-        public float|int $value,
+        public ThresholdOperator $operator,
+        public float $value,
     ) {}
 }

@@ -9,7 +9,6 @@
 
 namespace Tests\Fixtures\BalooBenchmarks;
 
-use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Group;
@@ -17,8 +16,9 @@ use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
-use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 use Tests\Fixtures\BalooBenchmarks\Support\BalooBenchCase;
 
 /**
@@ -33,7 +33,7 @@ final class StructDataBench extends BalooBenchCase
     #[Iterations(3)]
     #[Revolutions(120)]
     #[Regression(metric: Metric::Median, tolerance: '5%')]
-    #[Assert(Metric::Median, AssertionOperator::LessThan, 1_000_000.0)]
+    #[Threshold(Metric::Median, ThresholdOperator::LessThan, 1_000_000.0)]
     public function benchCollectionTransformation(): void
     {
         $this->structTransform(profile: false, cached: true);

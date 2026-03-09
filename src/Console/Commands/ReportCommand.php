@@ -88,7 +88,7 @@ final class ReportCommand extends Command
         $this
             ->addArgument('path', InputArgument::OPTIONAL, 'Benchmark path')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, md, csv)')
-            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Optional snapshot name to compare against')
+            ->addOption('against', null, InputOption::VALUE_REQUIRED, 'Optional reference name to compare against')
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Only run benchmarks matching the given text')
             ->addOption('group', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks in the given group')
             ->addOption('competitor', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Only run benchmarks for the given competitor')
@@ -99,28 +99,31 @@ final class ReportCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $this->preferredCompetitors = $config->preferredCompetitors;
-        $this->competitorAliases = $config->competitorAliases;
-        $this->comparisonReference = $config->comparisonReference;
-        $this->decimalSeparator = $config->decimalSeparator;
-        $this->thousandsSeparator = $config->thousandsSeparator;
-        $this->rawNumberDecimals = $config->rawNumberDecimals;
-        $this->durationDecimals = $config->durationDecimals;
-        $this->operationsDecimals = $config->operationsDecimals;
-        $this->ratioDecimals = $config->ratioDecimals;
-        $this->percentageDecimals = $config->percentageDecimals;
-        $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
-        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $config->significanceAlpha;
-        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
+        $comparison = $config->comparison();
+        $reporting = $config->reporting();
+        $storage = $config->storage();
+        $this->preferredCompetitors = $comparison->preferredCompetitors;
+        $this->competitorAliases = $comparison->competitorAliases;
+        $this->comparisonReference = $comparison->comparisonReference;
+        $this->decimalSeparator = $reporting->decimalSeparator;
+        $this->thousandsSeparator = $reporting->thousandsSeparator;
+        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
+        $this->durationDecimals = $reporting->durationDecimals;
+        $this->operationsDecimals = $reporting->operationsDecimals;
+        $this->ratioDecimals = $reporting->ratioDecimals;
+        $this->percentageDecimals = $reporting->percentageDecimals;
+        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
+        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $comparison->significanceAlpha;
+        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $results = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
         $against = $this->nullableOptionString($input, 'against');
-        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value;
+        $format = $this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value;
         $metadata = $this->reportMetadata('report', $config, $selection);
 
-        if ($against === null && $config->scenarioBaselines === []) {
+        if ($against === null && $comparison->scenarioBaselines === []) {
             $output->writeln(match ($format) {
                 'json' => $this->asJson($results, $metadata),
                 'csv' => $this->asCsv($results),
@@ -136,8 +139,8 @@ final class ReportCommand extends Command
             config: $config,
             results: $results,
             resolver: new BaselineResolver(
-                $this->resolvePath($config->snapshotPath),
-                $this->resolvePath($config->runPath),
+                $this->resolvePath($storage->snapshotPath),
+                $this->resolvePath($storage->runPath),
             ),
         );
         $baselineName = $against ?? $snapshot->name;

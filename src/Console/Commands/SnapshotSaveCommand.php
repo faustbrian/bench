@@ -58,12 +58,14 @@ final class SnapshotSaveCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
+        $execution = $config->execution();
+        $storage = $config->storage();
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $results = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
         $name = $this->argumentString($input, 'name');
 
-        new SnapshotStore($this->resolvePath($config->snapshotPath))->save(
+        new SnapshotStore($this->resolvePath($storage->snapshotPath))->save(
             name: $name,
             results: $results,
             metadata: [
@@ -73,10 +75,10 @@ final class SnapshotSaveCommand extends Command
                 'environment' => EnvironmentFingerprint::capture()->toArray(),
                 'selection' => $selection->toArray(),
                 'settings' => [
-                    'process_isolation' => $config->processIsolation,
-                    'default_iterations' => $config->defaultIterations,
-                    'default_revolutions' => $config->defaultRevolutions,
-                    'default_warmup_iterations' => $config->defaultWarmupIterations,
+                    'process_isolation' => $execution->processIsolation,
+                    'default_iterations' => $execution->defaultIterations,
+                    'default_revolutions' => $execution->defaultRevolutions,
+                    'default_warmup_iterations' => $execution->defaultWarmupIterations,
                 ],
             ],
         );

@@ -56,8 +56,8 @@ describe('BenchmarkRunner', function (): void {
 
         expect($parameterizedResults)->toHaveCount(2)
             ->and($parameterizedResults[0]->groups)->toBe(['dto', 'comparison'])
-            ->and($parameterizedResults[0]->assertions)->toHaveCount(1)
-            ->and($parameterizedResults[0]->assertions[0]->passed)->toBeTrue()
+            ->and($parameterizedResults[0]->thresholds)->toHaveCount(1)
+            ->and($parameterizedResults[0]->thresholds[0]->passed)->toBeTrue()
             ->and($parameterizedResults[0]->regressionMetric)->toBe(Metric::Median)
             ->and($parameterizedResults[0]->regressionTolerance)->toBe('7%')
             ->and($parameterizedResults[0]->parameters)->toBe(['size' => 'small', 'multiplier' => 10])

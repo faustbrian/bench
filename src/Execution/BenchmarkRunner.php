@@ -10,11 +10,11 @@
 namespace Cline\Bench\Execution;
 
 use Cline\Bench\Configuration\BenchConfig;
-use Cline\Bench\Discovery\BenchmarkAssertion;
+use Cline\Bench\Discovery\BenchmarkThreshold;
 use Cline\Bench\Discovery\BenchmarkDiscovery;
 use Cline\Bench\Discovery\DiscoveredBenchmark;
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 use Cline\Bench\Statistics\SummaryStatistics;
 use Cline\Bench\Statistics\SummaryStatisticsCalculator;
 use RuntimeException;
@@ -57,14 +57,15 @@ final readonly class BenchmarkRunner
     public function runPath(string $path, ?BenchConfig $config = null, ?callable $onProgress = null, ?BenchmarkSelection $selection = null): array
     {
         $config ??= BenchConfig::default();
+        $execution = $config->execution();
         $results = [];
         $executions = [];
 
         foreach ($this->discovery->discover(
             $path,
-            $config->defaultIterations,
-            $config->defaultRevolutions,
-            $config->defaultWarmupIterations,
+            $execution->defaultIterations,
+            $execution->defaultRevolutions,
+            $execution->defaultWarmupIterations,
         ) as $benchmark) {
             if ($selection instanceof BenchmarkSelection && !$selection->matchesDiscoveredBenchmark($benchmark)) {
                 continue;
@@ -147,7 +148,7 @@ final readonly class BenchmarkRunner
             parameters: $parameters,
             caseLabel: $caseLabel,
             groups: $benchmark->groups,
-            assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
+            thresholds: $this->evaluateThresholds($benchmark->thresholds, $summary),
             regressionMetric: $benchmark->regressionMetric,
             regressionTolerance: $benchmark->regressionTolerance !== '' ? $benchmark->regressionTolerance : null,
         );
@@ -158,15 +159,17 @@ final readonly class BenchmarkRunner
      */
     private function calibratedRevolutions(DiscoveredBenchmark $benchmark, array $parameters, BenchConfig $config): int
     {
-        if ($config->calibrationBudgetNanoseconds <= 0) {
+        $execution = $config->execution();
+
+        if ($execution->calibrationBudgetNanoseconds <= 0) {
             return $benchmark->revolutions;
         }
 
-        $elapsed = $config->processIsolation
+        $elapsed = $execution->processIsolation
             ? $this->isolatedSample($benchmark, $parameters, $benchmark->revolutions)
             : $this->localCalibrationSample($benchmark, $parameters, $benchmark->revolutions);
 
-        if ($elapsed >= $config->calibrationBudgetNanoseconds) {
+        if ($elapsed >= $execution->calibrationBudgetNanoseconds) {
             return $benchmark->revolutions;
         }
 
@@ -174,7 +177,7 @@ final readonly class BenchmarkRunner
             $benchmark->revolutions,
             (int) max(
                 1,
-                ceil($config->calibrationBudgetNanoseconds / max($elapsed, 1)),
+                ceil($execution->calibrationBudgetNanoseconds / max($elapsed, 1)),
             ) * $benchmark->revolutions,
         );
     }
@@ -240,7 +243,7 @@ final readonly class BenchmarkRunner
             parameters: $parameters,
             caseLabel: $caseLabel,
             groups: $benchmark->groups,
-            assertions: $this->evaluateAssertions($benchmark->assertions, $summary),
+            thresholds: $this->evaluateThresholds($benchmark->thresholds, $summary),
             regressionMetric: $benchmark->regressionMetric,
             regressionTolerance: $benchmark->regressionTolerance !== '' ? $benchmark->regressionTolerance : null,
         );
@@ -380,22 +383,22 @@ PHP;
     }
 
     /**
-     * @param  list<BenchmarkAssertion> $assertions
-     * @return list<AssertionResult>
+     * @param  list<BenchmarkThreshold> $thresholds
+     * @return list<ThresholdResult>
      */
-    private function evaluateAssertions(array $assertions, SummaryStatistics $summary): array
+    private function evaluateThresholds(array $thresholds, SummaryStatistics $summary): array
     {
         $results = [];
 
-        foreach ($assertions as $assertion) {
-            $actual = $this->metricValue($summary, $assertion->metric);
+        foreach ($thresholds as $threshold) {
+            $actual = $this->metricValue($summary, $threshold->metric);
 
-            $results[] = new AssertionResult(
-                metric: $assertion->metric,
-                operator: $assertion->operator,
-                expected: $assertion->value,
+            $results[] = new ThresholdResult(
+                metric: $threshold->metric,
+                operator: $threshold->operator,
+                expected: $threshold->value,
                 actual: $actual,
-                passed: $this->compare($actual, $assertion->operator, $assertion->value),
+                passed: $this->compare($actual, $threshold->operator, $threshold->value),
             );
         }
 
@@ -416,14 +419,14 @@ PHP;
         };
     }
 
-    private function compare(float $actual, AssertionOperator $operator, float $expected): bool
+    private function compare(float $actual, ThresholdOperator $operator, float $expected): bool
     {
         return match ($operator) {
-            AssertionOperator::LessThan => $actual < $expected,
-            AssertionOperator::LessThanOrEqual => $actual <= $expected,
-            AssertionOperator::GreaterThan => $actual > $expected,
-            AssertionOperator::GreaterThanOrEqual => $actual >= $expected,
-            AssertionOperator::Equal => $actual === $expected,
+            ThresholdOperator::LessThan => $actual < $expected,
+            ThresholdOperator::LessThanOrEqual => $actual <= $expected,
+            ThresholdOperator::GreaterThan => $actual > $expected,
+            ThresholdOperator::GreaterThanOrEqual => $actual >= $expected,
+            ThresholdOperator::Equal => $actual === $expected,
         };
     }
 }

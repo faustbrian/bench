@@ -9,7 +9,6 @@
 
 namespace Tests\Fixtures\Benchmarks;
 
-use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
 use Cline\Bench\Attributes\Group;
@@ -18,8 +17,9 @@ use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
-use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 use RuntimeException;
 
 use function throw_if;
@@ -48,7 +48,7 @@ final class ParameterizedBench
         ['size' => 'large', 'multiplier' => 100],
     ])]
     #[Regression(metric: Metric::Median, tolerance: '7%')]
-    #[Assert(Metric::Median, AssertionOperator::LessThan, 10_000_000.0)]
+    #[Threshold(Metric::Median, ThresholdOperator::LessThan, 10_000_000.0)]
     public function benchTransformPayload(string $size, int $multiplier): void
     {
         self::$sizes[] = $size;

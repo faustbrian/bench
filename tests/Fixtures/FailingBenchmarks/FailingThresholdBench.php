@@ -9,12 +9,12 @@
 
 namespace Tests\Fixtures\FailingBenchmarks;
 
-use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Iterations;
 use Cline\Bench\Attributes\Revolutions;
-use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 use RuntimeException;
 
 use function throw_if;
@@ -22,13 +22,13 @@ use function throw_if;
 /**
  * @author Brian Faust <brian@cline.sh>
  */
-final class FailingAssertBench
+final class FailingThresholdBench
 {
-    #[Bench('failing-assertion')]
+    #[Bench('failing-threshold')]
     #[Iterations(1)]
     #[Revolutions(1)]
-    #[Assert(Metric::Median, AssertionOperator::LessThan, 0.0)]
-    public function benchFailingAssertion(): void
+    #[Threshold(Metric::Median, ThresholdOperator::LessThan, 0.0)]
+    public function benchFailingThreshold(): void
     {
         $value = 1 + 1;
 

@@ -64,6 +64,62 @@ final readonly class BenchConfig
         return new self();
     }
 
+    public function storage(): StorageConfig
+    {
+        return new StorageConfig(
+            benchmarkPath: $this->benchmarkPath,
+            snapshotPath: $this->snapshotPath,
+            runPath: $this->runPath,
+            bootstrapPath: $this->bootstrapPath,
+        );
+    }
+
+    public function execution(): ExecutionConfig
+    {
+        return new ExecutionConfig(
+            defaultIterations: $this->defaultIterations,
+            defaultRevolutions: $this->defaultRevolutions,
+            defaultWarmupIterations: $this->defaultWarmupIterations,
+            calibrationBudgetNanoseconds: $this->calibrationBudgetNanoseconds,
+            processIsolation: $this->processIsolation,
+            defaultRegressionMetric: $this->defaultRegressionMetric,
+            defaultRegressionTolerance: $this->defaultRegressionTolerance,
+            compatibilityMode: $this->compatibilityMode,
+        );
+    }
+
+    public function reporting(): ReportingConfig
+    {
+        return new ReportingConfig(
+            defaultReportFormat: $this->defaultReportFormat,
+            progressMetric: $this->progressMetric,
+            progressTimeUnit: $this->progressTimeUnit,
+            decimalSeparator: $this->decimalSeparator,
+            thousandsSeparator: $this->thousandsSeparator,
+            rawNumberDecimals: $this->rawNumberDecimals,
+            durationDecimals: $this->durationDecimals,
+            operationsDecimals: $this->operationsDecimals,
+            progressTimeDecimals: $this->progressTimeDecimals,
+            progressOperationsDecimals: $this->progressOperationsDecimals,
+            ratioDecimals: $this->ratioDecimals,
+            percentageDecimals: $this->percentageDecimals,
+            deltaPercentageDecimals: $this->deltaPercentageDecimals,
+        );
+    }
+
+    public function comparison(): ComparisonConfig
+    {
+        return new ComparisonConfig(
+            preferredCompetitors: $this->preferredCompetitors,
+            competitorAliases: $this->competitorAliases,
+            scenarioBaselines: $this->scenarioBaselines,
+            comparisonReference: $this->comparisonReference,
+            significanceEnabled: $this->significanceEnabled,
+            significanceAlpha: $this->significanceAlpha,
+            significanceMinimumSamples: $this->significanceMinimumSamples,
+        );
+    }
+
     public function withBenchmarkPath(string $benchmarkPath): self
     {
         return $this->copy(benchmarkPath: $benchmarkPath);

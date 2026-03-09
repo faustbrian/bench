@@ -8,7 +8,6 @@
  */
 
 use Cline\Bench\Attributes\After;
-use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Before;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
@@ -18,9 +17,10 @@ use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Attributes\Warmup;
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 
 describe('Attributes', function (): void {
     it('stores constructor arguments for benchmark metadata', function (): void {
@@ -61,10 +61,10 @@ describe('Attributes', function (): void {
             new Params([['size' => 'small']])->sets,
         )->toBe([['size' => 'small']]);
 
-        $assert = new Assert(Metric::Median, AssertionOperator::LessThan, 1_000_000.0);
+        $assert = new Threshold(Metric::Median, ThresholdOperator::LessThan, 1_000_000.0);
 
         expect($assert->metric)->toBe(Metric::Median);
-        expect($assert->operator)->toBe(AssertionOperator::LessThan);
+        expect($assert->operator)->toBe(ThresholdOperator::LessThan);
         expect($assert->value)->toBe(1_000_000.0);
     });
 });

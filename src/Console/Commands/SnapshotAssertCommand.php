@@ -64,6 +64,7 @@ final class SnapshotAssertCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
+        $execution = $config->execution();
         $this->bootstrap($config);
         $current = new BenchmarkRunner()->runPath(
             $this->benchmarkPath($input, $config),
@@ -83,7 +84,7 @@ final class SnapshotAssertCommand extends Command
         if ($environmentWarning !== null) {
             $output->writeln($environmentWarning);
 
-            if ($config->compatibilityMode === CompatibilityMode::Fail) {
+            if ($execution->compatibilityMode === CompatibilityMode::Fail) {
                 return self::FAILURE;
             }
         }
@@ -102,10 +103,10 @@ final class SnapshotAssertCommand extends Command
                 continue;
             }
 
-            $metric = $result->regressionMetric ?? $config->defaultRegressionMetric;
+            $metric = $result->regressionMetric ?? $execution->defaultRegressionMetric;
             $effectiveTolerance = $this->optionString($input, 'tolerance')
                 ?? $result->regressionTolerance
-                ?? $config->defaultRegressionTolerance;
+                ?? $execution->defaultRegressionTolerance;
 
             $decision = $evaluator->evaluate(
                 current: $result,
@@ -197,9 +198,11 @@ final class SnapshotAssertCommand extends Command
      */
     private function resolveBaseline(InputInterface $input, BenchConfig $config, array $current): Snapshot
     {
+        $storage = $config->storage();
+        $comparison = $config->comparison();
         $resolver = new BaselineResolver(
-            $this->resolvePath($config->snapshotPath),
-            $this->resolvePath($config->runPath),
+            $this->resolvePath($storage->snapshotPath),
+            $this->resolvePath($storage->runPath),
         );
         $against = $this->againstReference($input);
 
@@ -207,13 +210,13 @@ final class SnapshotAssertCommand extends Command
             return $resolver->resolve($against);
         }
 
-        if ($config->scenarioBaselines !== []) {
+        if ($comparison->scenarioBaselines !== []) {
             return new ScenarioBaselineResolver($resolver)->resolve(
                 scenarios: array_values(array_unique(array_map(
                     static fn (BenchmarkResult $result): string => $result->scenario,
                     $current,
                 ))),
-                scenarioBaselines: $config->scenarioBaselines,
+                scenarioBaselines: $comparison->scenarioBaselines,
             );
         }
 

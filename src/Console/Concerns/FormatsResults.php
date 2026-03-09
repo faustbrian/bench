@@ -54,6 +54,28 @@ use function strcmp;
 use function usort;
 
 /**
+ * @phpstan-type BaselineComparisonRow array{
+ *     scenario: string,
+ *     subject: string,
+ *     competitor: string,
+ *     parameter_label: string,
+ *     current_median: float,
+ *     baseline_median: float,
+ *     delta_percentage: float,
+ *     winner: string,
+ *     reference_gap: float,
+ *     reference_gain: float,
+ *     significance: array{
+ *         status: string,
+ *         label: string,
+ *         p_value: null|float,
+ *         alpha: null|float,
+ *         minimum_samples: null|int
+ *     },
+ *     significance_label: string,
+ *     regression_label: string
+ * }
+ *
  * @author Brian Faust <brian@cline.sh>
  */
 trait FormatsResults
@@ -218,7 +240,7 @@ trait FormatsResults
             'percentile95',
             'percentile99',
             'operations_per_second',
-            'assertions',
+            'thresholds',
         ]];
 
         foreach ($results as $result) {
@@ -232,7 +254,7 @@ trait FormatsResults
                 $this->formatNumber($result->summary->percentile95),
                 $this->formatNumber($result->summary->percentile99),
                 $this->formatNumber($result->summary->operationsPerSecond),
-                $this->assertionSummary($result),
+                $this->thresholdSummary($result),
             ];
         }
 
@@ -320,7 +342,7 @@ trait FormatsResults
         }
 
         $lines = [
-            '| Scenario | Subject | Competitor | Parameters | Groups | Median (ns) | p95 (ns) | p99 (ns) | ops/s | Winner | Reference Gap | Reference Gain | Assertions |',
+            '| Scenario | Subject | Competitor | Parameters | Groups | Median (ns) | p95 (ns) | p99 (ns) | ops/s | Winner | Reference Gap | Reference Gain | Thresholds |',
             '| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |',
         ];
 
@@ -341,7 +363,7 @@ trait FormatsResults
                 $comparison->winner,
                 $this->formatRatio($comparison->referenceGap),
                 $this->formatPercentage($comparison->referenceGain),
-                $this->assertionSummary($result),
+                $this->thresholdSummary($result),
             );
         }
 
@@ -414,12 +436,12 @@ trait FormatsResults
                 $comparison->winner,
                 $this->formatRatio($comparison->referenceGap),
                 $this->formatPercentage($comparison->referenceGain),
-                $this->assertionSummary($result),
+                $this->thresholdSummary($result),
             );
         }
 
         return $this->prependPlainMetadata($this->renderConsoleTable(
-            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Winner', 'Reference Gap', 'Reference Gain', 'Assertions'],
+            headers: ['Scenario', 'Subject', 'Competitor', 'Parameters', 'Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Winner', 'Reference Gap', 'Reference Gain', 'Thresholds'],
             rows: $rows,
             rightAlignedHeaders: ['Median (ns)', 'p95 (ns)', 'p99 (ns)', 'ops/s', 'Reference Gap', 'Reference Gain'],
         ), $metadata);
@@ -619,7 +641,7 @@ trait FormatsResults
     /**
      * @param  list<BenchmarkResult>      $results
      * @param  list<BenchmarkResult>      $baseline
-     * @return list<array<string, mixed>>
+     * @return list<BaselineComparisonRow>
      */
     private function comparisonRowsAgainstBaseline(array $results, array $baseline): array
     {
@@ -670,23 +692,23 @@ trait FormatsResults
         return $rows;
     }
 
-    private function assertionSummary(BenchmarkResult $result): string
+    private function thresholdSummary(BenchmarkResult $result): string
     {
-        if ($result->assertions === []) {
+        if ($result->thresholds === []) {
             return 'n/a';
         }
 
         $passed = 0;
 
-        foreach ($result->assertions as $assertion) {
-            if (!$assertion->passed) {
+        foreach ($result->thresholds as $threshold) {
+            if (!$threshold->passed) {
                 continue;
             }
 
             ++$passed;
         }
 
-        return sprintf('%d/%d', $passed, count($result->assertions));
+        return sprintf('%d/%d', $passed, count($result->thresholds));
     }
 
     private function baselineWinner(BenchmarkResult $current, BenchmarkResult $baseline): string

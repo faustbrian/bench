@@ -9,18 +9,18 @@
 
 namespace Cline\Bench\Execution;
 
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
+use Cline\Bench\Enums\ThresholdOperator;
 
 /**
  * @psalm-immutable
  * @author Brian Faust <brian@cline.sh>
  */
-final readonly class AssertionResult
+final readonly class ThresholdResult
 {
     public function __construct(
         public Metric $metric,
-        public AssertionOperator $operator,
+        public ThresholdOperator $operator,
         public float $expected,
         public float $actual,
         public bool $passed,

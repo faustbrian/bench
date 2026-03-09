@@ -12,11 +12,11 @@ namespace Cline\Bench\Enums;
 /**
  * @author Brian Faust <brian@cline.sh>
  */
-enum AssertionOperator: string
+enum ThresholdOperator: string
 {
     case LessThan = '<';
     case LessThanOrEqual = '<=';
     case GreaterThan = '>';
     case GreaterThanOrEqual = '>=';
-    case Equal = '==';
+    case Equal = '=';
 }

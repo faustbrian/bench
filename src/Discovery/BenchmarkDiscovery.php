@@ -10,7 +10,6 @@
 namespace Cline\Bench\Discovery;
 
 use Cline\Bench\Attributes\After;
-use Cline\Bench\Attributes\Assert;
 use Cline\Bench\Attributes\Before;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Competitor;
@@ -20,6 +19,7 @@ use Cline\Bench\Attributes\Params;
 use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Attributes\Warmup;
 use Cline\Bench\Enums\Metric;
 use ReflectionAttribute;
@@ -142,7 +142,7 @@ final class BenchmarkDiscovery
                 afterMethods: [...$classAfter, ...$this->attributeList($method, After::class)],
                 groups: [...$classGroups, ...$this->groupAttributes($method)],
                 parameterSets: $this->parameterSets($method),
-                assertions: $this->assertions($method),
+                thresholds: $this->thresholds($method),
                 regressionMetric: $this->metricAttribute($method, Regression::class, 'metric'),
                 regressionTolerance: $this->stringAttribute($method, Regression::class, 'tolerance', ''),
             );
@@ -273,22 +273,22 @@ final class BenchmarkDiscovery
     }
 
     /**
-     * @return list<BenchmarkAssertion>
+     * @return list<BenchmarkThreshold>
      */
-    private function assertions(ReflectionMethod $method): array
+    private function thresholds(ReflectionMethod $method): array
     {
-        $assertions = [];
+        $thresholds = [];
 
-        foreach ($method->getAttributes(Assert::class, ReflectionAttribute::IS_INSTANCEOF) as $foundAttribute) {
+        foreach ($method->getAttributes(Threshold::class, ReflectionAttribute::IS_INSTANCEOF) as $foundAttribute) {
             $instance = $foundAttribute->newInstance();
 
-            $assertions[] = new BenchmarkAssertion(
+            $thresholds[] = new BenchmarkThreshold(
                 metric: $instance->metric,
                 operator: $instance->operator,
                 value: (float) $instance->value,
             );
         }
 
-        return $assertions;
+        return $thresholds;
     }
 }

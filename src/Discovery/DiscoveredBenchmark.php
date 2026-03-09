@@ -22,7 +22,7 @@ final readonly class DiscoveredBenchmark
      * @param list<string>               $afterMethods
      * @param list<string>               $groups
      * @param list<array<string, mixed>> $parameterSets
-     * @param list<BenchmarkAssertion>   $assertions
+     * @param list<BenchmarkThreshold>   $thresholds
      */
     public function __construct(
         public string $sourcePath,
@@ -38,7 +38,7 @@ final readonly class DiscoveredBenchmark
         public array $afterMethods = [],
         public array $groups = [],
         public array $parameterSets = [],
-        public array $assertions = [],
+        public array $thresholds = [],
         public ?Metric $regressionMetric = null,
         public ?string $regressionTolerance = null,
     ) {}

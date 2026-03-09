@@ -30,7 +30,7 @@ describe('bench run', function (): void {
          *         summary: array<string, mixed>,
          *         parameters: array<string, mixed>,
          *         groups: list<string>,
-         *         assertions: list<mixed>,
+         *         thresholds: list<mixed>,
          *         regression: array<string, mixed>
          *     }>,
          *     comparison: array{rows: list<array<string, mixed>>},
@@ -64,7 +64,7 @@ describe('bench run', function (): void {
             ->and($payload['results'][0])->toHaveKeys([
                 'parameters',
                 'groups',
-                'assertions',
+                'thresholds',
                 'regression',
             ])
             ->and($payload['comparison']['rows'][0])->toHaveKeys([
@@ -399,17 +399,17 @@ PHP);
         }
     });
 
-    it('fails when benchmark assertions fail', function (): void {
+    it('fails when benchmark thresholds fail', function (): void {
         $application = new BenchApplication();
         $command = $application->find('run');
         $tester = new CommandTester($command);
 
         $statusCode = $tester->execute([
             'command' => 'run',
-            'path' => __DIR__.'/../../Fixtures/FailingBenchmarks/FailingAssertBench.php',
+            'path' => __DIR__.'/../../Fixtures/FailingBenchmarks/FailingThresholdBench.php',
         ]);
 
         expect($statusCode)->toBe(1)
-            ->and($tester->getDisplay())->toContain('assertions failed');
+            ->and($tester->getDisplay())->toContain('thresholds failed');
     });
 });

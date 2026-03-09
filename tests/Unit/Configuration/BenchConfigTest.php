@@ -18,6 +18,10 @@ use Cline\Bench\Environment\CompatibilityMode;
 describe('BenchConfig', function (): void {
     it('provides stable defaults for benchmarks and snapshots', function (): void {
         $config = BenchConfig::default();
+        $storage = $config->storage();
+        $execution = $config->execution();
+        $reporting = $config->reporting();
+        $comparison = $config->comparison();
 
         expect($config->benchmarkPath)->toBe('benchmarks')
             ->and($config->snapshotPath)->toBe('.bench/snapshots')
@@ -50,7 +54,11 @@ describe('BenchConfig', function (): void {
             ->and($config->significanceEnabled)->toBeTrue()
             ->and($config->significanceAlpha)->toBe(0.05)
             ->and($config->significanceMinimumSamples)->toBe(2)
-            ->and($config->compatibilityMode)->toBe(CompatibilityMode::Warn);
+            ->and($config->compatibilityMode)->toBe(CompatibilityMode::Warn)
+            ->and($storage->benchmarkPath)->toBe('benchmarks')
+            ->and($execution->defaultIterations)->toBe(5)
+            ->and($reporting->defaultReportFormat)->toBe(ReportFormat::Table)
+            ->and($comparison->comparisonReference)->toBe(ComparisonReference::Closest);
     });
 
     it('loads a typed config file from the working directory', function (): void {
@@ -97,6 +105,10 @@ return BenchConfig::default()
 PHP);
 
         $config = BenchConfigLoader::load($directory);
+        $storage = $config->storage();
+        $execution = $config->execution();
+        $reporting = $config->reporting();
+        $comparison = $config->comparison();
 
         expect($config->benchmarkPath)->toBe('custom-benchmarks')
             ->and($config->snapshotPath)->toBe('.snapshots/bench')
@@ -129,6 +141,10 @@ PHP);
             ->and($config->significanceEnabled)->toBeTrue()
             ->and($config->significanceAlpha)->toBe(0.01)
             ->and($config->significanceMinimumSamples)->toBe(5)
-            ->and($config->compatibilityMode)->toBe(CompatibilityMode::Fail);
+            ->and($config->compatibilityMode)->toBe(CompatibilityMode::Fail)
+            ->and($storage->runPath)->toBe('.runs/bench')
+            ->and($execution->processIsolation)->toBeTrue()
+            ->and($reporting->decimalSeparator)->toBe(',')
+            ->and($comparison->preferredCompetitors)->toBe(['valinor', 'struct']);
     });
 });

@@ -118,7 +118,7 @@ Method-level attributes:
 
 - `#[Bench('name')]`
 - `#[Params([...])]`
-- `#[Assert(metric, operator, value)]`
+- `#[Threshold(metric, operator, value)]`
 - `#[Regression(metric: Metric::Median, tolerance: '5%')]`
 
 ### Example Benchmark
@@ -128,7 +128,7 @@ Method-level attributes:
 
 namespace Benchmarks;
 
-use Cline\Bench\Attributes\Assert;
+use Cline\Bench\Attributes\Threshold;
 use Cline\Bench\Attributes\Bench;
 use Cline\Bench\Attributes\Before;
 use Cline\Bench\Attributes\Competitor;
@@ -139,7 +139,7 @@ use Cline\Bench\Attributes\Regression;
 use Cline\Bench\Attributes\Revolutions;
 use Cline\Bench\Attributes\Scenario;
 use Cline\Bench\Attributes\Warmup;
-use Cline\Bench\Enums\AssertionOperator;
+use Cline\Bench\Enums\ThresholdOperator;
 use Cline\Bench\Enums\Metric;
 
 #[Scenario('dto-transform')]
@@ -163,7 +163,7 @@ final class TransformBench
         ['size' => 'small'],
         ['size' => 'large'],
     ])]
-    #[Assert(Metric::Median, AssertionOperator::LessThan, 5_000_000.0)]
+    #[Threshold(Metric::Median, ThresholdOperator::LessThan, 5_000_000.0)]
     #[Regression(metric: Metric::Median, tolerance: '5%')]
     public function benchCollectionTransformation(string $size): void
     {
@@ -199,13 +199,13 @@ must map cleanly to the method signature:
 Use them for repeatable setup and teardown, not for one-time suite
 initialization.
 
-### Assertions
+### Thresholds
 
-Assertions fail `bench run` when a benchmark exceeds a hard threshold.
+Thresholds fail `bench run` when a benchmark exceeds a hard threshold.
 This is useful for CI gates on your own package:
 
 ```php
-#[Assert(Metric::Median, AssertionOperator::LessThan, 5_000_000.0)]
+#[Threshold(Metric::Median, ThresholdOperator::LessThan, 5_000_000.0)]
 ```
 
 ### Regression Policies
@@ -285,12 +285,13 @@ Behavior:
 - shows live progress in `table` mode unless `--no-progress` is set
 - disables significance labels in rendered output when `--no-significance`
   is set
-- returns a non-zero exit code when benchmark assertions fail
+- returns a non-zero exit code when benchmark thresholds fail
 - saves runs to `.bench/runs/<name>.json` and mirrors them to `latest.json`
 
 ### `bench report`
 
-Runs benchmarks and renders a report, optionally against a baseline.
+Runs benchmarks and renders a report, optionally against a saved
+reference.
 
 ```bash
 vendor/bin/bench report --format=table
@@ -316,7 +317,7 @@ Behavior:
 
 ### `bench compare`
 
-Runs benchmarks and compares the current run against a saved baseline.
+Runs benchmarks and compares the current run against a saved reference.
 
 ```bash
 vendor/bin/bench compare baseline
@@ -347,10 +348,10 @@ vendor/bin/bench compare baseline --fail-on-winner-change --min-reference-gap=2
 
 Behavior:
 
-- accepts a positional baseline name or `--against`
+- accepts a positional reference name or `--against`
 - resolves snapshots with `snapshot:<name>` and runs with `run:<name>`
-- if no explicit baseline is provided, scenario baselines from `bench.php`
-  may satisfy the comparison
+- if no explicit reference is provided, scenario baselines from
+  `bench.php` may satisfy the comparison
 - returns a non-zero exit code when compare policies fail
 
 ### `bench snapshot:save`
@@ -402,9 +403,12 @@ Behavior:
 - prints one regression decision per benchmark
 - returns a non-zero exit code when any benchmark exceeds tolerance
 
-## Baseline References
+## References
 
-Anywhere a baseline is accepted, you can use:
+`bench` uses `reference` as the generic term for any saved comparison
+target. A reference can be either a snapshot or a saved run.
+
+Anywhere a reference is accepted, you can use:
 
 - `baseline`
 - `snapshot:baseline`
@@ -413,6 +417,8 @@ Anywhere a baseline is accepted, you can use:
 - `run:pr-123`
 
 If no prefix is given, `bench` resolves the name as a snapshot first.
+
+Scenario baselines are just reference mappings stored in `bench.php`.
 
 ## Selection Flags
 
@@ -466,6 +472,25 @@ JSON output is intended for tooling and automation. It includes:
 - derived statistics
 - comparison rows
 - compare policy results when relevant
+
+JSON is a versioned public contract. Consumers should branch on
+`schema_version` and treat unknown fields as additive.
+
+Current guarantees for `schema_version: 1`:
+
+- `report_type` distinguishes `run`, `comparison`, and `snapshot`
+- `generated_at` is an ISO-8601 UTC timestamp
+- `environment` and `settings` are emitted when that context exists
+- current-run rows include `summary`, `samples`, `parameters`,
+  `parameter_label`, `groups`, `thresholds`, and `regression`
+- comparison rows include `winner`, `reference_gap`, `reference_gain`,
+  and structured `significance`
+- structured significance includes:
+  - `status`
+  - `label`
+  - `p_value`
+  - `alpha`
+  - `minimum_samples`
 
 ### CSV
 
@@ -575,6 +600,20 @@ Current defaults:
 - significance minimum samples: `2`
 - compatibility mode: `warn`
 
+### Grouped Config Views
+
+`BenchConfig` is still the fluent builder you return from `bench.php`,
+but it also exposes grouped value objects for integrations and internal
+code:
+
+- `storage()`
+- `execution()`
+- `reporting()`
+- `comparison()`
+
+These views mirror the flat config values without changing the public
+builder API.
+
 ### Path and Bootstrap Controls
 
 - `withBenchmarkPath()` sets the default discovery path
@@ -613,7 +652,7 @@ return BenchConfig::default()
 
 - `withDefaultRegression(metric: Metric::Median, tolerance: '5%')`
 
-Use this when you want a project-wide fallback for snapshot assertions.
+Use this when you want a project-wide fallback for snapshot thresholds.
 
 ### Significance Controls
 
@@ -792,7 +831,7 @@ Implemented now:
 - attribute-driven discovery
 - grouped and parameterized benchmarks
 - snapshots, saved runs, and `latest` aliases
-- regression assertions
+- regression thresholds
 - comparison-first terminal and Markdown reports
 - compare exit policies
 - calibrated revolutions and optional process isolation

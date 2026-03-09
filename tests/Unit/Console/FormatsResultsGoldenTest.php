@@ -8,11 +8,11 @@
  */
 
 use Cline\Bench\Console\Concerns\FormatsResults;
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\ComparisonReference;
 use Cline\Bench\Enums\Metric;
-use Cline\Bench\Execution\AssertionResult;
 use Cline\Bench\Execution\BenchmarkResult;
+use Cline\Bench\Enums\ThresholdOperator;
+use Cline\Bench\Execution\ThresholdResult;
 use Cline\Bench\Statistics\SummaryStatistics;
 
 describe('FormatsResults golden outputs', function (): void {
@@ -242,10 +242,10 @@ function goldenResults(): array
             ),
             samples: [95.0, 100.0, 105.0, 120.0, 125.0],
             groups: ['baloo', 'dto', 'comparison'],
-            assertions: [
-                new AssertionResult(
+            thresholds: [
+                new ThresholdResult(
                     metric: Metric::Median,
-                    operator: AssertionOperator::LessThan,
+                    operator: ThresholdOperator::LessThan,
                     expected: 150.0,
                     actual: 100.0,
                     passed: true,
@@ -266,10 +266,10 @@ function goldenResults(): array
             ),
             samples: [110.0, 120.0, 125.0, 145.0, 150.0],
             groups: ['baloo', 'dto', 'comparison'],
-            assertions: [
-                new AssertionResult(
+            thresholds: [
+                new ThresholdResult(
                     metric: Metric::Median,
-                    operator: AssertionOperator::LessThan,
+                    operator: ThresholdOperator::LessThan,
                     expected: 170.0,
                     actual: 120.0,
                     passed: true,
@@ -299,10 +299,10 @@ function goldenBaselineResults(): array
             ),
             samples: [100.0, 110.0, 115.0, 130.0, 140.0],
             groups: ['baloo', 'dto', 'comparison'],
-            assertions: [
-                new AssertionResult(
+            thresholds: [
+                new ThresholdResult(
                     metric: Metric::Median,
-                    operator: AssertionOperator::LessThan,
+                    operator: ThresholdOperator::LessThan,
                     expected: 150.0,
                     actual: 110.0,
                     passed: true,
@@ -323,10 +323,10 @@ function goldenBaselineResults(): array
             ),
             samples: [120.0, 130.0, 135.0, 150.0, 160.0],
             groups: ['baloo', 'dto', 'comparison'],
-            assertions: [
-                new AssertionResult(
+            thresholds: [
+                new ThresholdResult(
                     metric: Metric::Median,
-                    operator: AssertionOperator::LessThan,
+                    operator: ThresholdOperator::LessThan,
                     expected: 170.0,
                     actual: 130.0,
                     passed: true,

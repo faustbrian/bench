@@ -35,3 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON comparison output now exposes structured significance metadata,
   and the comparison domain uses typed significance results instead of
   magic strings
+- The public benchmark threshold API now uses `Threshold` and
+  `ThresholdOperator`, and serialized benchmark results expose
+  `thresholds` instead of `assertions`
+- `BenchConfig` now exposes grouped `storage()`, `execution()`,
+  `reporting()`, and `comparison()` views for integrations
+- `USAGE.md` now documents reference terminology and the versioned JSON
+  schema contract, and the installed-package test suite now covers
+  `vendor/bin/bench run`

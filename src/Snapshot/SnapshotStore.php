@@ -9,10 +9,10 @@
 
 namespace Cline\Bench\Snapshot;
 
-use Cline\Bench\Enums\AssertionOperator;
 use Cline\Bench\Enums\Metric;
-use Cline\Bench\Execution\AssertionResult;
+use Cline\Bench\Enums\ThresholdOperator;
 use Cline\Bench\Execution\BenchmarkResult;
+use Cline\Bench\Execution\ThresholdResult;
 use Cline\Bench\Statistics\SummaryStatistics;
 use RuntimeException;
 
@@ -137,16 +137,18 @@ final readonly class SnapshotStore
                 is_array($result['groups'] ?? null) ? $result['groups'] : [],
                 is_string(...),
             )),
-            assertions: array_map(
-                fn (array $assertion): AssertionResult => new AssertionResult(
-                    metric: $this->metricValue($assertion['metric'] ?? null) ?? Metric::Median,
-                    operator: $this->assertionOperatorValue($assertion['operator'] ?? null),
-                    expected: $this->floatValue($assertion['expected'] ?? null),
-                    actual: $this->floatValue($assertion['actual'] ?? null),
-                    passed: (bool) ($assertion['passed'] ?? false),
+            thresholds: array_map(
+                fn (array $threshold): ThresholdResult => new ThresholdResult(
+                    metric: $this->metricValue($threshold['metric'] ?? null) ?? Metric::Median,
+                    operator: $this->thresholdOperatorValue($threshold['operator'] ?? null),
+                    expected: $this->floatValue($threshold['expected'] ?? null),
+                    actual: $this->floatValue($threshold['actual'] ?? null),
+                    passed: (bool) ($threshold['passed'] ?? false),
                 ),
                 array_values(array_filter(
-                    is_array($result['assertions'] ?? null) ? $result['assertions'] : [],
+                    is_array($result['thresholds'] ?? null)
+                        ? $result['thresholds']
+                        : (is_array($result['assertions'] ?? null) ? $result['assertions'] : []),
                     is_array(...),
                 )),
             ),
@@ -179,13 +181,13 @@ final readonly class SnapshotStore
         return is_string($value) ? Metric::tryFrom($value) : null;
     }
 
-    private function assertionOperatorValue(mixed $value): AssertionOperator
+    private function thresholdOperatorValue(mixed $value): ThresholdOperator
     {
         if (!is_string($value)) {
-            return AssertionOperator::Equal;
+            return ThresholdOperator::Equal;
         }
 
-        return AssertionOperator::tryFrom($value) ?? AssertionOperator::Equal;
+        return ThresholdOperator::tryFrom($value) ?? ThresholdOperator::Equal;
     }
 
     private function path(string $name): string

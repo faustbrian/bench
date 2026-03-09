@@ -119,26 +119,28 @@ final class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $this->preferredCompetitors = $config->preferredCompetitors;
-        $this->competitorAliases = $config->competitorAliases;
-        $this->progressMetric = $config->progressMetric;
-        $this->progressTimeUnit = $config->progressTimeUnit;
-        $this->comparisonReference = $config->comparisonReference;
-        $this->decimalSeparator = $config->decimalSeparator;
-        $this->thousandsSeparator = $config->thousandsSeparator;
-        $this->rawNumberDecimals = $config->rawNumberDecimals;
-        $this->durationDecimals = $config->durationDecimals;
-        $this->operationsDecimals = $config->operationsDecimals;
-        $this->progressTimeDecimals = $config->progressTimeDecimals;
-        $this->progressOperationsDecimals = $config->progressOperationsDecimals;
-        $this->ratioDecimals = $config->ratioDecimals;
-        $this->percentageDecimals = $config->percentageDecimals;
-        $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
-        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $config->significanceAlpha;
-        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
+        $comparison = $config->comparison();
+        $reporting = $config->reporting();
+        $this->preferredCompetitors = $comparison->preferredCompetitors;
+        $this->competitorAliases = $comparison->competitorAliases;
+        $this->progressMetric = $reporting->progressMetric;
+        $this->progressTimeUnit = $reporting->progressTimeUnit;
+        $this->comparisonReference = $comparison->comparisonReference;
+        $this->decimalSeparator = $reporting->decimalSeparator;
+        $this->thousandsSeparator = $reporting->thousandsSeparator;
+        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
+        $this->durationDecimals = $reporting->durationDecimals;
+        $this->operationsDecimals = $reporting->operationsDecimals;
+        $this->progressTimeDecimals = $reporting->progressTimeDecimals;
+        $this->progressOperationsDecimals = $reporting->progressOperationsDecimals;
+        $this->ratioDecimals = $reporting->ratioDecimals;
+        $this->percentageDecimals = $reporting->percentageDecimals;
+        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
+        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $comparison->significanceAlpha;
+        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
         $this->bootstrap($config);
-        $format = $this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value;
+        $format = $this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value;
         $selection = $this->selection($input);
         $metadata = $this->reportMetadata('run', $config, $selection);
         $showProgress = $format === 'table'
@@ -226,11 +228,11 @@ final class RunCommand extends Command
 
         $output->writeln($rendered);
 
-        if (!$this->hasFailedAssertions($results)) {
+        if (!$this->hasFailedThresholds($results)) {
             return self::SUCCESS;
         }
 
-        $output->writeln('Benchmark assertions failed.');
+        $output->writeln('Benchmark thresholds failed.');
 
         return self::FAILURE;
     }
@@ -435,11 +437,11 @@ final class RunCommand extends Command
     /**
      * @param list<BenchmarkResult> $results
      */
-    private function hasFailedAssertions(array $results): bool
+    private function hasFailedThresholds(array $results): bool
     {
         foreach ($results as $result) {
-            foreach ($result->assertions as $assertion) {
-                if (!$assertion->passed) {
+            foreach ($result->thresholds as $threshold) {
+                if (!$threshold->passed) {
                     return true;
                 }
             }

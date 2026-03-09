@@ -50,7 +50,7 @@ use function throw_unless;
 /**
  * @author Brian Faust <brian@cline.sh>
  */
-#[AsCommand(name: 'compare', description: 'Compare a benchmark run against a saved snapshot.')]
+#[AsCommand(name: 'compare', description: 'Compare a benchmark run against a saved reference.')]
 final class CompareCommand extends Command
 {
     use FormatsResults;
@@ -105,26 +105,30 @@ final class CompareCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = BenchConfigLoader::load();
-        $this->preferredCompetitors = $config->preferredCompetitors;
-        $this->competitorAliases = $config->competitorAliases;
-        $this->comparisonReference = $config->comparisonReference;
-        $this->decimalSeparator = $config->decimalSeparator;
-        $this->thousandsSeparator = $config->thousandsSeparator;
-        $this->rawNumberDecimals = $config->rawNumberDecimals;
-        $this->durationDecimals = $config->durationDecimals;
-        $this->operationsDecimals = $config->operationsDecimals;
-        $this->ratioDecimals = $config->ratioDecimals;
-        $this->percentageDecimals = $config->percentageDecimals;
-        $this->deltaPercentageDecimals = $config->deltaPercentageDecimals;
-        $this->significanceEnabled = $config->significanceEnabled && !$this->flag($input, 'no-significance');
-        $this->significanceAlpha = $config->significanceAlpha;
-        $this->significanceMinimumSamples = $config->significanceMinimumSamples;
+        $comparison = $config->comparison();
+        $reporting = $config->reporting();
+        $execution = $config->execution();
+        $storage = $config->storage();
+        $this->preferredCompetitors = $comparison->preferredCompetitors;
+        $this->competitorAliases = $comparison->competitorAliases;
+        $this->comparisonReference = $comparison->comparisonReference;
+        $this->decimalSeparator = $reporting->decimalSeparator;
+        $this->thousandsSeparator = $reporting->thousandsSeparator;
+        $this->rawNumberDecimals = $reporting->rawNumberDecimals;
+        $this->durationDecimals = $reporting->durationDecimals;
+        $this->operationsDecimals = $reporting->operationsDecimals;
+        $this->ratioDecimals = $reporting->ratioDecimals;
+        $this->percentageDecimals = $reporting->percentageDecimals;
+        $this->deltaPercentageDecimals = $reporting->deltaPercentageDecimals;
+        $this->significanceEnabled = $comparison->significanceEnabled && !$this->flag($input, 'no-significance');
+        $this->significanceAlpha = $comparison->significanceAlpha;
+        $this->significanceMinimumSamples = $comparison->significanceMinimumSamples;
         $this->bootstrap($config);
         $selection = $this->selection($input);
         $current = new BenchmarkRunner()->runPath($this->benchmarkPath($input, $config), $config, null, $selection);
         $resolver = new BaselineResolver(
-            $this->resolvePath($config->snapshotPath),
-            $this->resolvePath($config->runPath),
+            $this->resolvePath($storage->snapshotPath),
+            $this->resolvePath($storage->runPath),
         );
         $snapshot = $this->resolveBaseline($input, $config, $current, $resolver);
         $against = $snapshot->name;
@@ -134,7 +138,7 @@ final class CompareCommand extends Command
         if ($environmentWarning !== null) {
             $output->writeln($environmentWarning);
 
-            if ($config->compatibilityMode === CompatibilityMode::Fail) {
+            if ($execution->compatibilityMode === CompatibilityMode::Fail) {
                 return self::FAILURE;
             }
         }
@@ -147,7 +151,7 @@ final class CompareCommand extends Command
             comparisonReference: $this->comparisonReference,
         );
 
-        $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $config->defaultReportFormat->value) {
+        $output->writeln(match ($this->nullableOptionString($input, 'format') ?? $reporting->defaultReportFormat->value) {
             'json' => $this->asComparisonJson($current, $snapshot->results, [
                 'schema_version' => 1,
                 'report_type' => 'comparison',
@@ -160,10 +164,10 @@ final class CompareCommand extends Command
                 'current' => [
                     'environment' => EnvironmentFingerprint::capture()->toArray(),
                     'settings' => [
-                        'process_isolation' => $config->processIsolation,
-                        'default_iterations' => $config->defaultIterations,
-                        'default_revolutions' => $config->defaultRevolutions,
-                        'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'process_isolation' => $execution->processIsolation,
+                        'default_iterations' => $execution->defaultIterations,
+                        'default_revolutions' => $execution->defaultRevolutions,
+                        'default_warmup_iterations' => $execution->defaultWarmupIterations,
                         'significance_enabled' => $this->significanceEnabled,
                         'significance_alpha' => $this->significanceAlpha,
                         'significance_minimum_samples' => $this->significanceMinimumSamples,
@@ -177,10 +181,10 @@ final class CompareCommand extends Command
                 'current' => [
                     'environment' => EnvironmentFingerprint::capture()->toArray(),
                     'settings' => [
-                        'process_isolation' => $config->processIsolation,
-                        'default_iterations' => $config->defaultIterations,
-                        'default_revolutions' => $config->defaultRevolutions,
-                        'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'process_isolation' => $execution->processIsolation,
+                        'default_iterations' => $execution->defaultIterations,
+                        'default_revolutions' => $execution->defaultRevolutions,
+                        'default_warmup_iterations' => $execution->defaultWarmupIterations,
                         'significance_enabled' => $this->significanceEnabled,
                         'significance_alpha' => $this->significanceAlpha,
                         'significance_minimum_samples' => $this->significanceMinimumSamples,
@@ -194,10 +198,10 @@ final class CompareCommand extends Command
                 'current' => [
                     'environment' => EnvironmentFingerprint::capture()->toArray(),
                     'settings' => [
-                        'process_isolation' => $config->processIsolation,
-                        'default_iterations' => $config->defaultIterations,
-                        'default_revolutions' => $config->defaultRevolutions,
-                        'default_warmup_iterations' => $config->defaultWarmupIterations,
+                        'process_isolation' => $execution->processIsolation,
+                        'default_iterations' => $execution->defaultIterations,
+                        'default_revolutions' => $execution->defaultRevolutions,
+                        'default_warmup_iterations' => $execution->defaultWarmupIterations,
                         'significance_enabled' => $this->significanceEnabled,
                         'significance_alpha' => $this->significanceAlpha,
                         'significance_minimum_samples' => $this->significanceMinimumSamples,

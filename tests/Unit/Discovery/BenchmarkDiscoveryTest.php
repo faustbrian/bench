@@ -8,6 +8,7 @@
  */
 
 use Cline\Bench\Discovery\BenchmarkDiscovery;
+use Cline\Bench\Discovery\DiscoveredBenchmark;
 use Cline\Bench\Enums\Metric;
 use Tests\Fixtures\Benchmarks\DefaultBench;
 use Tests\Fixtures\Benchmarks\ParameterizedBench;
@@ -33,13 +34,14 @@ describe('BenchmarkDiscovery', function (): void {
             break;
         }
 
+        /** @var DiscoveredBenchmark $defaultBench */
         expect($defaultBench)->not->toBeNull()
             ->and($defaultBench->scenario)->toBe('DefaultBench')
             ->and($defaultBench->competitor)->toBe('DefaultBench')
             ->and($defaultBench->subject)->toBe('default');
     });
 
-    it('discovers groups, params, assertions, and regression metadata', function (): void {
+    it('discovers groups, params, thresholds, and regression metadata', function (): void {
         $benchmarks = new BenchmarkDiscovery()->discover(__DIR__.'/../../Fixtures/Benchmarks');
         $parameterizedBench = null;
 
@@ -57,6 +59,7 @@ describe('BenchmarkDiscovery', function (): void {
             break;
         }
 
+        /** @var DiscoveredBenchmark $parameterizedBench */
         expect($parameterizedBench)->not->toBeNull()
             ->and($parameterizedBench->groups)->toBe(['dto', 'comparison'])
             ->and($parameterizedBench->parameterSets)->toBe([
@@ -65,7 +68,7 @@ describe('BenchmarkDiscovery', function (): void {
             ])
             ->and($parameterizedBench->regressionMetric)->toBe(Metric::Median)
             ->and($parameterizedBench->regressionTolerance)->toBe('7%')
-            ->and($parameterizedBench->assertions)->toHaveCount(1)
-            ->and($parameterizedBench->assertions[0]->metric)->toBe(Metric::Median);
+            ->and($parameterizedBench->thresholds)->toHaveCount(1)
+            ->and($parameterizedBench->thresholds[0]->metric)->toBe(Metric::Median);
     });
 });

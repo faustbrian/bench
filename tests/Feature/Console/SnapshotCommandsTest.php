@@ -180,7 +180,7 @@ PHP);
         }
     });
 
-    it('renders environment context in markdown reports and respects selectors in snapshot assertions', function (): void {
+    it('renders environment context in markdown reports and respects selectors in snapshot thresholds', function (): void {
         $workingDirectory = sys_get_temp_dir().'/bench-report-'.bin2hex(random_bytes(8));
         mkdir($workingDirectory, 0o755, true);
         $previousDirectory = getcwd();

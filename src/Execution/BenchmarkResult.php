@@ -32,7 +32,7 @@ final readonly class BenchmarkResult
      * @param list<float>           $samples
      * @param array<string, mixed>  $parameters
      * @param list<string>          $groups
-     * @param list<AssertionResult> $assertions
+     * @param list<ThresholdResult> $thresholds
      */
     public function __construct(
         public string $subject,
@@ -43,7 +43,7 @@ final readonly class BenchmarkResult
         public array $parameters = [],
         public ?string $caseLabel = null,
         public array $groups = [],
-        public array $assertions = [],
+        public array $thresholds = [],
         public ?Metric $regressionMetric = null,
         public ?string $regressionTolerance = null,
     ) {}
@@ -87,9 +87,9 @@ final readonly class BenchmarkResult
             'case_label' => $this->caseLabel,
             'parameter_label' => $this->parameterLabel(),
             'groups' => $this->groups,
-            'assertions' => array_map(
-                static fn (AssertionResult $assertion): array => $assertion->toArray(),
-                $this->assertions,
+            'thresholds' => array_map(
+                static fn (ThresholdResult $threshold): array => $threshold->toArray(),
+                $this->thresholds,
             ),
             'regression' => [
                 'metric' => $this->regressionMetric?->value,
