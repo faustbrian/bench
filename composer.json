@@ -13,8 +13,8 @@
     ],
     "require": {
         "php": "^8.5.0",
-        "symfony/console": "^7.4",
-        "symfony/finder": "^7.4",
+        "symfony/console": "^7.4 || ^8.0",
+        "symfony/finder": "^7.4 || ^8.0",
         "nunomaduro/termwind": "^2.3"
     },
     "require-dev": {
@@ -22,7 +22,7 @@
         "pestphp/pest": "^4.0",
         "phpstan/phpstan": "^2.1",
         "rector/rector": "^2.0",
-        "symfony/var-dumper": "^7.4.0"
+        "symfony/var-dumper": "^7.4.0 || ^8.0"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
